@@ -89,14 +89,14 @@ class BottomUpParser(Parser):
         imprimir=p.CADENA
         imprimir=imprimir.split("%")
         cad=p.IDEXTRA
-        print(imprimir[0]+printfstring)
+        print(printfstring)
+        printfstring=""
         prinfvar=0
 
     @_(' "," ID IDEXTRA')
     def IDEXTRA(self,p):
         global prinfvar
         global printfstring
-        cadena=p[-1]
         type=p.IDEXTRA
         cad=""
         if type[prinfvar][0]=='d':
@@ -115,7 +115,7 @@ class BottomUpParser(Parser):
             cad=cad+type[prinfvar][i]
 
         prinfvar=prinfvar-1
-        printfstring=printfstring+cad
+        printfstring=cad+printfstring
         return type
 
     @_(' ')
