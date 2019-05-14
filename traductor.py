@@ -1,10 +1,13 @@
 from sly import Lexer, Parser
 
-profundidad=0
 variablesPila={}# Id----Profundidad en la pila
 #variables globales tiene profundidad cero
 variablesValor={}
-etiquetas=-1
+variablesTipo={}
+etiquetas=-1 # para no repetir etiquetas , añadimos esto al final del de la etiqueta 'final'
+profundidad=0# indica la profundidad en la pila de las variables locales
+prinfvar=0 #variable para indicar que variable imprimir a la hora de hacer un prinf
+printfstring=""
 
 
 class NodoOR:
@@ -25,7 +28,7 @@ class BottomUpLexer(Lexer):
 
     NUMBER = r'\d+'
 
-    #CADENA = r'[a-z]'
+    CADENA =r'[a-zA-Z0-9%]*'
     ID = r'[a-zA-Z][a-zA-Z0-9_]*'
     ID['if'] = IF
     ID['else'] = ELSE
@@ -33,7 +36,7 @@ class BottomUpLexer(Lexer):
     ID['int'] = INT
     ID['float'] = FLOAT
     ID['char'] = CHAR
-    #ID['printf'] = PRINTF
+    ID['printf'] = PRINTF
     EQUAL = r'=='
     NOTEQUAL= r'!='
     BIGGEROREQUAL= r'>='
@@ -50,7 +53,6 @@ class BottomUpLexer(Lexer):
     BIGGER = r'>'
     SMALLER = r'<'
     ASSIGN = r'='
-    #CADENA =r'[a-zA-Z0-9%]*' # COMPROBAR ESTO
 
 
     @_(r'\d+') # si no pones esto te trata los numeros como string
@@ -80,6 +82,50 @@ class BottomUpParser(Parser):
     def entrada(self,p):
         pass
 
+    @_('PRINTF "(" "\"" CADENA "\"" IDEXTRA ")"')
+    def entrada(self,p):
+        global prinfvar
+        global printfstring
+        imprimir=p.CADENA
+        imprimir=imprimir.split("%")
+        cad=p.IDEXTRA
+        print(imprimir[0]+printfstring)
+        prinfvar=0
+
+    @_(' "," ID IDEXTRA')
+    def IDEXTRA(self,p):
+        global prinfvar
+        global printfstring
+        cadena=p[-1]
+        type=p.IDEXTRA
+        cad=""
+        if type[prinfvar][0]=='d':
+            if variablesTipo[p.ID]=="int":
+                cad=cad+variablesValor[p.ID]
+        else:
+            if type[prinfvar][0]=='c':
+                if variablesTipo[p.ID]=="char":
+                    cad=cad+variablesValor[p.ID]
+            else:
+                if type[prinfvar][0]=='f':
+                    if variablesTipo[p.ID]=="float":
+                        cad=cad+variablesValor[p.ID]
+
+        for i in range(1,len(type[prinfvar])):
+            cad=cad+type[prinfvar][i]
+
+        prinfvar=prinfvar-1
+        printfstring=printfstring+cad
+        return type
+
+    @_(' ')
+    def IDEXTRA(self,p):
+        global prinfvar
+        imprimir=p[-3]
+        cad=imprimir.split(%)
+        prinfvar=len(cad)-1
+        return cad
+
     @_('INT')
     def tipo(self,p):
         print("subl $4, %esp")
@@ -99,6 +145,7 @@ class BottomUpParser(Parser):
         #hay que comprobar que no se repite
         variablesPila[p.ID] = profundidad#comprobar
         variablesValor[p.ID]= p.igual
+        variablesTipo[p.ID]=p[-1]
 
     @_('ASSIGN logicOR assignExtra')
     def igual(self,p):
