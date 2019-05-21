@@ -1,10 +1,14 @@
 Grammar design:
 
 entrada -> f_linea instruction
-instruction -> statement | WHILE LPAREN logic RPAREN LKEY statement RKEY
+instruction -> statement | endwhile
+endwhile -> middle statement RKEY
+middle -> middle_logic RPAREN LKEY
+middle_logic -> begin_while logic
+begin_while -> WHILE LPAREN
 f_linea -> TIPO linea END f_linea | ' ' 
-linea -> assign rest | ID rest 
-assig -> ID ASSIGN logic | ' ' 
+linea -> assign | ID rest 
+assig -> ID ASSIGN logic rest | ' ' 
 rest -> 'COMA linea' | ' ' 
 statement -> ID ASSIGN logic | logic | ' ' 
 logic -> logic EQUAL logicpr | logic NEQUAL logicpr | logicpr
