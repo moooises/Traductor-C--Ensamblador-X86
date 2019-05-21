@@ -28,7 +28,7 @@ class BottomUpLexer(Lexer):
 
     NUMBER = r'\d+'
 
-    CADENA =r'[a-zA-Z0-9%]*'
+    #CADENA =r'[a-zA-Z0-9%]*'
     ID = r'[a-zA-Z][a-zA-Z0-9_]*'
     ID['if'] = IF
     ID['else'] = ELSE
@@ -82,49 +82,55 @@ class BottomUpParser(Parser):
     def entrada(self,p):
         pass
 
-    @_('PRINTF "(" "\"" CADENA "\"" IDEXTRA ")"')
+    @_('IF ')
     def entrada(self,p):
-        global prinfvar
-        global printfstring
-        imprimir=p.CADENA
-        imprimir=imprimir.split("%")
-        cad=p.IDEXTRA
-        print(printfstring)
-        printfstring=""
-        prinfvar=0
 
-    @_(' "," ID IDEXTRA')
-    def IDEXTRA(self,p):
-        global prinfvar
-        global printfstring
-        type=p.IDEXTRA
-        cad=""
-        if type[prinfvar][0]=='d':
-            if variablesTipo[p.ID]=="int":
-                cad=cad+variablesValor[p.ID]
-        else:
-            if type[prinfvar][0]=='c':
-                if variablesTipo[p.ID]=="char":
-                    cad=cad+variablesValor[p.ID]
-            else:
-                if type[prinfvar][0]=='f':
-                    if variablesTipo[p.ID]=="float":
-                        cad=cad+variablesValor[p.ID]
 
-        for i in range(1,len(type[prinfvar])):
-            cad=cad+type[prinfvar][i]
+    #@_('PRINTF "(" "\"" CADENA "\"" IDEXTRA ")"')
+    #def entrada(self,p):
+    #    global prinfvar
+    #    global printfstring
+    #     imprimir=p.CADENA
+    #     imprimir=imprimir.split("%")
+    #     cad=p.IDEXTRA
+    #     print(printfstring)
+    #     printfstring=""
+    #     prinfvar=0
 
-        prinfvar=prinfvar-1
-        printfstring=cad+printfstring
-        return type
+    # @_(' "," ID IDEXTRA')
+    # def IDEXTRA(self,p):
+    #     global prinfvar
+    #     global printfstring
+    #     type=p.IDEXTRA
+    #     cad=""
+    #     if type[prinfvar][0]=='d':
+    #         if variablesTipo[p.ID]=="int":
+    #             cad=cad+variablesValor[p.ID]
+    #     else:
+    #         if type[prinfvar][0]=='c':
+    #             if variablesTipo[p.ID]=="char":
+    #                 cad=cad+variablesValor[p.ID]
+    #         else:
+    #             if type[prinfvar][0]=='f':
+    #                 if variablesTipo[p.ID]=="float":
+    #                     cad=cad+variablesValor[p.ID]
 
-    @_(' ')
-    def IDEXTRA(self,p):
-        global prinfvar
-        imprimir=p[-3]
-        cad=imprimir.split(%)
-        prinfvar=len(cad)-1
-        return cad
+    #     for i in range(1,len(type[prinfvar])):
+    #         cad=cad+type[prinfvar][i]
+#
+#         prinfvar=prinfvar-1
+#         printfstring=cad+printfstring
+#         return type
+
+#     @_(' ')
+#     def IDEXTRA(self,p):
+#         global prinfvar
+#         imprimir=p[-3]
+#         cad=imprimir.split("%")
+#         prinfvar=len(cad)-1
+
+#         return cad
+
 
     @_('INT')
     def tipo(self,p):
