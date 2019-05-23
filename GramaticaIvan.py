@@ -2,7 +2,7 @@ import sys
 sys.path.append('../..')
 
 from sly import Lexer, Parser
-
+#usar $ tanto para & como para *
 tabla = {} #Dictionary
 labels = 0
 class Tabla():
@@ -13,27 +13,27 @@ class Tabla():
             raise NameError('Variable ' + "\"" + var + "\"" + ' declarada anteriormente')
         else:
             self.contador -= 4
-            tabla[var] = [self.contador, value]
-    
+            tabla[var] = [self.contador, value,]
+
     def insertValue(self, var, value):
         if var in tabla:
-            tabla[var][1] = value #Modificamos el campo valor de la variable. 
+            tabla[var][1] = value #Modificamos el campo valor de la variable.
         else:
-            raise NameError('Variable ' + "\"" + var + "\"" + 'no declarada') 
-    
+            raise NameError('Variable ' + "\"" + var + "\"" + 'no declarada')
+
     def compVar(self, var):
         if var in tabla:
             return 't'
         else:
             return 'f'
-               
+
     def cadena(self, var):
         if var in tabla:
             res = str(tabla[var][0]) + "(%ebp)"
-        else: 
+        else:
             res = "$" + str(var)
         return res
-    
+
 manejador = Tabla()
 def incrementLabel():
     global labels
@@ -44,7 +44,7 @@ def incrementLabel():
 class NodoVariable():
     def __init__(self):
         print("subl $4, %esp")
-    
+
 class NodoAsign():
     def __init__(self, variable, valor):
         if valor == None:
@@ -57,23 +57,23 @@ class NodoSuma():
         #Vamos a la tabla para la comprobacion de tipos.
         str1 = manejador.cadena(valor1)#[0]
         str2 = manejador.cadena(valor2)#[0]
-        
-        print("movl " + str1 + ", %eax")  
+
+        print("movl " + str1 + ", %eax")
         print("addl " + str2 + ", %eax")
-        #print("movl %eax, " + str1) 
+        #print("movl %eax, " + str1)
 
 class NodoProducto():
     def __init__(self, valor1, valor2):
         str1 = manejador.cadena(valor1)
         str2 = manejador.cadena(valor2)
-        print("movl " + str1 + ", %eax")  
+        print("movl " + str1 + ", %eax")
         print("addl " + str2 + ", %eax")
         print("movl %eax, " + str1)
 
 class NodoEqual():
     def __init__(self, valor1, valor2):
         print("operador ==")
-        
+
 class NodoNequal():
     def __init__(self, valor1, valor2):
         print("operador !=")
@@ -81,7 +81,7 @@ class NodoNequal():
 class NodoGreater():
     def __init__(self, valor1, valor2):
         print("operador >")
-        
+
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
               IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS}
@@ -94,7 +94,7 @@ class CalcLexer(Lexer):
     ID['else'] = ELSE
     ID['while'] = WHILE
     NUM = r'\d+'
-    
+
     #Aritmetic
     PLUS = r'\+'
     MINUS = r'-'
@@ -111,7 +111,7 @@ class CalcLexer(Lexer):
     RKEY = r'}'
     COMA = r','
     END = r';'
-    
+
 
     # Ignored pattern
     ignore_newline = r'\n+'
@@ -127,7 +127,7 @@ class CalcLexer(Lexer):
 class CalcParser(Parser):
     tokens = CalcLexer.tokens
     #manejador = Tabla()
-    
+
     #precedence = (
     #    ('left', PLUS, MINUS),
     #    ('left', TIMES, DIVIDE),
@@ -136,126 +136,160 @@ class CalcParser(Parser):
 
     def __init__(self):
         self.names = { }
-    
+
     @_('f_linea instruction')
     def entrada(self,p):
         pass
-    
+
     @_('statement')
     def instruction(self, p):
         pass
-    
+
     @_('endwhile')#('WHILE LPAREN logic RPAREN LKEY statement RKEY')
     def instruction(self, p):
         print('Pasando por instruction')
         pass
-    
+
     @_('middle statement RKEY')
     def endwhile(self, p):
         print('pasando por endwhile')
         pass
-    
+
     @_('middle_logic RPAREN LKEY')
     def middle(self, p):
         print('pasando por middle')
         pass
-    
-    @_('begin_while logic')
+
+    @_('begin_while LPAREN logic')
     def middle_logic(self, p):
         print('pasando por middle_logic')
         pass
-    
+
     @_('WHILE LPAREN')
     def begin_while(self, p):
         #print('pasando por begin_while')
         incrementLabel()
         pass
     #Comienzo del bucle while
-    
+
+    @_('endif  endelse')
+    def instruction(self,p):
+        print("Pasando por endif  endelse")
+
+    @_('middle_if statement RKEY')
+    def endif(self,p):
+        print("Pasando por middleif statement RKEY")
+
+    @_('middle_if_logic LKEY')
+    def middle_if(self,p):
+        print("Pasando por middle_if_logic LKEY")
+
+    @_('begin_if logic RPAREN')
+    def middle_if_logic(self,p):
+        print("Pasando por begin_if logic RPAREN")
+
+    @_('IF LPAREN')
+    def begin_if(self,p):
+        print("Pasando por IF LPAREN")
+
+    @_('middle_else RKEY')
+    def endelse(self,p):
+        print("Pasa por middleelse RKEY")
+
+    @_('')
+    def endelse(self,p):
+        print("No hay else")
+
+    @_('begin_else statement')
+    def middle_else(self,p):
+        print("Pasa por begin_else statement")
+
+    @_('ELSE LKEY')
+    def begin_else(self,p):
+        print("Paso por ELSE LKEY")
+
     @_('TIPO linea END f_linea')
     def f_linea(self, p):
         #print('Instruccion correcta')
         pass
-    
+
     @_('')
     def f_linea(self, p):
         pass
-        
+
     @_('assig rest')
     def linea(self, p):
         pass
         #manejador.insertVar(p.ID) #Aquí almacenamos la variable.
-    
+
     @_('ID rest')
     def linea(self, p):
         manejador.insertVar(p.ID, 0)
         NodoVariable()
-    
+
     @_('ID ASSIGN logic')
     def assig(self,p):
         manejador.insertVar(p.ID, p.logic)
         NodoVariable()
         NodoAsign(p.ID, p.logic)
         #print(tabla[p.ID])
-    
+
     @_(' ')
     def assig(self, p):
         pass
-    
+
     @_('COMA linea')
     def rest(self, p):
         pass
-    
+
     @_(' ')
     def rest(self,p):
         pass
 
-    @_('ID ASSIGN logic END statement') 
+    @_('ID ASSIGN logic END statement')
     def statement(self, p): #Falta buscar el valor en el sistema
         manejador.insertValue(p.ID, p.logic)
         NodoAsign(p.ID, p.logic)
         #print('pasando por statement')
         #tabla[p.ID][1] = p.logic
         #print(tabla[p.ID])
-        
+
     @_('logic')
     def statement(self,p):
         return p.logic
     @_(' ')
     def statement(self,p):
         pass
-    
+
     @_('logic EQUAL logicpr')
     def logic(self, p):
         NodoEqual(p.logic, p.logicpr)
-    
+
     @_('logic NEQUAL logicpr')
     def logic(self, p):
         NodoNequal(p.logic, p.logicpr)
         #print('pasando por !=')
-        
+
     @_('logicpr')
     def logic(self,p):
         return p.logicpr
-    
+
     @_('logicpr GREATER expr')
     def logicpr(self, p):
         NodoGreater(p.logicpr, p.expr)
-    
+
     @_('logicpr LESS expr')
     def logicpr(self, p):
         NodoLess(p.logicpr, p.expr)
-        
+
     @_('expr')
     def logicpr(self, p):
         return p.expr
-    
+
     @_('expr PLUS fact')
     def expr(self, p):
         NodoSuma(p.expr,p.fact)
-        
-        
-        
+
     @_('expr MINUS fact')
     def expr(self, p):
         a = NodoResta(p.expr, p.fact)
@@ -264,7 +298,7 @@ class CalcParser(Parser):
     @_('fact')
     def expr(self, p):
         return p.fact
-    
+
     @_('fact TIMES basico')
     def fact(self, p):
         a = NodoProducto(p.fact, p.basico)
@@ -274,28 +308,28 @@ class CalcParser(Parser):
     def fact(self, p):
         a = fact(p.fact, p.basico)
         return a.result #p.expr0 / p.expr1
-    
+
     @_('basico')
     def fact(self, p):
         return p.basico
-    
+
     @_('MINUS basico')
     def basico(self, p):
         return -p.basico
-    
+
     @_('ID') #Uso de la variable
     def basico(self, p): #Si el id no esta en la tabla, debe mostrar error.
         return p.ID
 
-    @_('NUM') 
+    @_('NUM')
     def basico(self, p):
         #print("NUM = ", p.NUM)
         return int(p.NUM)
-    
+
     @_('LPAREN expr RPAREN')
     def basico(self, p):
         return p.expr
-    
+
 if __name__ == '__main__':
     lexer = CalcLexer()
     parser = CalcParser()
@@ -310,4 +344,4 @@ if __name__ == '__main__':
 #entrada -> int a = 3, b = 4; while( a != 3) { a = a + 1; }
 #entrada -> int a = 3, b =4; a = a +b;
 
-#Problemas: La insercion de variables en la pila se hace al reves. 
+#Problemas: La insercion de variables en la pila se hace al reves.

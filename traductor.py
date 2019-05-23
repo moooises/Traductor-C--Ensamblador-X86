@@ -50,7 +50,7 @@ class BottomUpLexer(Lexer):
     BIGGER = r'>'
     SMALLER = r'<'
     ASSIGN = r'='
-    #CADENA =r'[a-zA-Z0-9%]*' # COMPROBAR ESTO
+    CADENA =r'"[a-zA-Z0-9%]*"' # COMPROBAR ESTO
 
 
     @_(r'\d+') # si no pones esto te trata los numeros como string
@@ -75,6 +75,10 @@ class BottomUpParser(Parser):
     @_('tipo asig ";" entrada')
     def entrada(self,p):
         pass
+
+    @_('CADENA ')
+    def entrada(self,p):
+        print(p.CADENA)
 
     @_(' ')
     def entrada(self,p):
