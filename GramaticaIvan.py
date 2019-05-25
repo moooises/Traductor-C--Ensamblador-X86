@@ -39,6 +39,9 @@ def incrementLabel():
     global labels
     labels = labels + 1
     print('L' + str(labels) + ':')
+def decrementLabel(): #Lo uso en el while.
+    global labels
+    labels = labels - 1
 
 
 class NodoVariable():
@@ -81,6 +84,23 @@ class NodoNequal():
 class NodoGreater():
     def __init__(self, valor1, valor2):
         print("operador >")
+
+class NodoLogic():
+    def __init__(self,  valor1, op, valor2):
+        self. valor1 = valor1
+        self.op = op
+        self.valor2 = valor2
+
+    def escribir(self):
+        #Averiguar en que posicion esta la variable que buscas.
+        print( "cmp " + manejador.cadena(self.valor2) + "," + manejador.cadena(self.valor1))
+
+    def salto(self):
+        global labels
+        if self.op == '!=':
+            print("je L" + str(labels + 1))
+        if self.op == '==':
+            print("jne L" + str(labels + 1))
 
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
@@ -145,6 +165,21 @@ class CalcParser(Parser):
     def instruction(self, p):
         pass
 
+    @_('WHILE LPAREN empty1 empty2 statement RKEY')
+    def instruction(selfself, p):
+        global labels
+        print('jmp L' + str(labels))
+        incrementLabel()
+
+    @_(" ")
+    def empty1(self, p):
+        incrementLabel() #Imprimir la etiqueta actual
+
+    @_("logic RPAREN LKEY")
+    def empty2(self, p):
+        p.logic.salto() #Instruccion de salto.
+
+    """ #Fin del bucle while antiguo
     @_('endwhile')#('WHILE LPAREN logic RPAREN LKEY statement RKEY')
     def instruction(self, p):
         print('Pasando por instruction')
@@ -163,6 +198,8 @@ class CalcParser(Parser):
     @_('begin_while LPAREN logic')
     def middle_logic(self, p):
         print('pasando por middle_logic')
+        nodo = p.logic
+        print(nodo.valor1, nodo.op, nodo.valor2)
         pass
 
     @_('WHILE LPAREN')
@@ -170,6 +207,7 @@ class CalcParser(Parser):
         #print('pasando por begin_while')
         incrementLabel()
         pass
+    """
     #Comienzo del bucle while
 
     @_('endif  endelse')
@@ -263,11 +301,13 @@ class CalcParser(Parser):
 
     @_('logic EQUAL logicpr')
     def logic(self, p):
-        NodoEqual(p.logic, p.logicpr)
+        return NodoLogic(p.logic, p.EQUAL, p.logicpr)
 
     @_('logic NEQUAL logicpr')
     def logic(self, p):
-        NodoNequal(p.logic, p.logicpr)
+        a = NodoLogic(p.logic, p.NEQUAL, p.logicpr)
+        a.escribir()
+        return a
         #print('pasando por !=')
 
     @_('logicpr')
