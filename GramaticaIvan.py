@@ -101,10 +101,18 @@ class NodoLogic():
             print("je L" + str(labels + 1))
         if self.op == '==':
             print("jne L" + str(labels + 1))
+        if self.op == '<':
+            print("jl L" + str(labels + 1))
+        if self.op == '>':
+            print("jg L" + str(labels + 1))
+        if self.op == '<=':
+            print("jle L" + str(labels + 1))
+        if self.op == '>=':
+            print("jge L" + str(labels + 1))
 
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL}
     ignore = ' \t'
 
     # Tokens
@@ -120,10 +128,12 @@ class CalcLexer(Lexer):
     MINUS = r'-'
     TIMES = r'\*'
     DIVIDE = r'/'
-    GREATER = r'>'
-    LESS = r'<'
+    BIGGEROREQUAL = r'>='
+    LESSOREQUAL = r'<='
     EQUAL = r'=='
     NEQUAL = r'!='
+    GREATER = r'>'
+    LESS = r'<'
     ASSIGN = r'='
     LPAREN = r'\('
     RPAREN = r'\)'
@@ -161,7 +171,7 @@ class CalcParser(Parser):
     def entrada(self,p):
         pass
 
-    @_('statement')
+    @_('statement END')
     def instruction(self, p):
         pass
 
@@ -214,6 +224,8 @@ class CalcParser(Parser):
     def instruction(self,p):
         print("Pasando por endif  endelse")
 
+
+
     @_('middle_if statement RKEY')
     def endif(self,p):
         print("Pasando por middleif statement RKEY")
@@ -245,6 +257,7 @@ class CalcParser(Parser):
     @_('ELSE LKEY')
     def begin_else(self,p):
         print("Paso por ELSE LKEY")
+
 
     @_('TIPO linea END f_linea')
     def f_linea(self, p):
@@ -301,26 +314,44 @@ class CalcParser(Parser):
 
     @_('logic EQUAL logicpr')
     def logic(self, p):
-        return NodoLogic(p.logic, p.EQUAL, p.logicpr)
+        a = NodoLogic(p.logic, p.NEQUAL, p.logicpr)
+        a.escribir()
+        return a
+        #return NodoLogic(p.logic, p.EQUAL, p.logicpr)
 
     @_('logic NEQUAL logicpr')
     def logic(self, p):
         a = NodoLogic(p.logic, p.NEQUAL, p.logicpr)
         a.escribir()
         return a
-        #print('pasando por !=')
 
     @_('logicpr')
-    def logic(self,p):
-        return p.logicpr
+    def logic(self, p):
+        return p.logicpr #Perfe, debería subir el nodo.
+
+    @_('logicpr LESSOREQUAL expr')
+    def logicpr(self, p):
+        a = NodoLogic(p.logicpr, p.LESSOREQUAL, p.expr)
+        a.escribir()
+        return a
+
+    @_('logicpr BIGGEROREQUAL expr')
+    def logicpr(self, p):
+        a = NodoLogic(p.logicpr, p.BIGGEROREQUAL, p.expr)
+        a.escribir()
+        return a
 
     @_('logicpr GREATER expr')
     def logicpr(self, p):
-        NodoGreater(p.logicpr, p.expr)
+        a = NodoLogic(p.logicpr, p.GREATER, p.expr)
+        a.escribir()
+        return a
 
     @_('logicpr LESS expr')
     def logicpr(self, p):
-        NodoLess(p.logicpr, p.expr)
+        a = NodoLogic(p.logicpr, p.LESS, p.expr)
+        a.escribir()
+        return a
 
     @_('expr')
     def logicpr(self, p):
@@ -383,5 +414,7 @@ if __name__ == '__main__':
 
 #entrada -> int a = 3, b = 4; while( a != 3) { a = a + 1; }
 #entrada -> int a = 3, b =4; a = a +b;
+#entrada -> int a = 3;  a < 3;
+#entrada -> int a = 3, b = 4; while( a >= 3) { a = a + 1; }
 
 #Problemas: La insercion de variables en la pila se hace al reves.
