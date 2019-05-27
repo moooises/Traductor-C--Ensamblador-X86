@@ -298,7 +298,7 @@ class CalcParser(Parser):
     def instruction(self, p):
         pass
 
-    @_('WHILE LPAREN empty1 empty2 statement RKEY')
+    @_('WHILE LPAREN empty1 empty2 instruction RKEY') #He sustituido statement por instruction.
     def instruction(selfself, p):
         global labels
         print('jmp final' + str(labelswhile))
@@ -508,5 +508,5 @@ if __name__ == '__main__':
 #entrada -> int a = 3, b =4; a = a +b;
 #entrada -> int a = 3;  a < 3;
 #entrada -> int a = 3, b = 4; while( a >= 3) { a = a + 1; }
-
+#entrada -> int a = 3, b = 4; while( a >= 3) { while(a == 2) {a = a + 1; }}
 #Problemas: La insercion de variables en la pila se hace al reves.

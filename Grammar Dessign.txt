@@ -1,11 +1,12 @@
-Grammar design:
-
+Grammar design
 entrada -> f_linea instruction
-instruction -> statement | endwhile
-endwhile -> middle statement RKEY
-middle -> middle_logic RPAREN LKEY
-middle_logic -> begin_while logic
-begin_while -> WHILE LPAREN
+instruction -> statement END | WHILE LPAREN empty1 empty2 statement RKEY
+	 	| IF LPAREN empty3 LKEY statement RKEY elseif 
+empty1 -> " " 
+empty2 -> logic RPAREN LKEY
+empty3 -> logic RPAREN {NodoIf()}
+elseif -> " " | empty4 statement RKEY | ELSE LKEY 
+empty4 -> ELSE LKEY
 f_linea -> TIPO linea END f_linea | ' ' 
 linea -> assign | ID rest 
 assig -> ID ASSIGN logic rest | ' ' 
