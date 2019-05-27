@@ -298,6 +298,10 @@ class CalcParser(Parser):
     def instruction(self, p):
         pass
 
+    @_(' ')
+    def instruction(self, p):
+        pass
+
     @_('WHILE LPAREN empty1 empty2 instruction RKEY') #He sustituido statement por instruction.
     def instruction(selfself, p):
         global labels
