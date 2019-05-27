@@ -318,19 +318,24 @@ class CalcParser(Parser):
 
     @_("logic RPAREN LKEY")
     def empty2(self, p):
+        global eax
         NodoWhile()
+        eax=False
     #Comienzo del bucle while
     #@_('WHILE LPAREN empty1 empty2 statement RKEY')
 
-    @_('IF LPAREN empty3 LKEY instruction RKEY elseif')
+    @_('IF LPAREN empty3 LKEY instruction elseif')
     def instruction(self,p):
         pass
 
     @_('logic RPAREN')
     def empty3(self,p):
+        global eax
         NodoIf()
+        eax=False
 
-    @_(' ')
+
+    @_('RKEY')
     def elseif(self,p):
         print("final"+str(labels))
         incrementLabel()
