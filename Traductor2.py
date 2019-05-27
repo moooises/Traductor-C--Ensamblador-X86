@@ -318,7 +318,7 @@ class CalcParser(Parser):
     #Comienzo del bucle while
     #@_('WHILE LPAREN empty1 empty2 statement RKEY')
 
-    @_('IF LPAREN empty3 LKEY statement RKEY elseif')
+    @_('IF LPAREN empty3 LKEY instruction RKEY elseif')
     def instruction(self,p):
         pass
 
@@ -331,7 +331,7 @@ class CalcParser(Parser):
         print("final"+str(labels))
         incrementLabel()
 
-    @_('empty4 statement RKEY')
+    @_('empty4 instruction RKEY')
     def elseif(self,p):
         print("final"+str(labels)+":")
 
@@ -508,5 +508,6 @@ if __name__ == '__main__':
 #entrada -> int a = 3, b =4; a = a +b;
 #entrada -> int a = 3;  a < 3;
 #entrada -> int a = 3, b = 4; while( a >= 3) { a = a + 1; }
+#entrada -> int a=1;if(a==1){while(1==1){a=a+1;}}
 #entrada -> int a = 3, b = 4; while( a >= 3) { while(a == 2) {a = a + 1; }}
 #Problemas: La insercion de variables en la pila se hace al reves.
