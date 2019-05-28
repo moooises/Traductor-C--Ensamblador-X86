@@ -233,9 +233,22 @@ class NodoLogic():
         if self.op == '>=':
             print("jge L" + str(labels + 1))
 
+class beginFunction():
+    def __init__(self):
+        print('pushl %ebp')
+        print('movl %esp, %ebp')
+
+class endFunction():
+    def __init__(self):
+        print('movl %ebp, %esp')
+        print('popl %ebp')
+        print('movl $0, %eax')
+        print('ret')
+
+
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN}
     ignore = ' \t'
 
     # Tokens
@@ -244,6 +257,7 @@ class CalcLexer(Lexer):
     ID['if'] = IF
     ID['else'] = ELSE
     ID['while'] = WHILE
+    ID['main'] = MAIN
     NUM = r'\d+'
 
     #Aritmetic
@@ -290,6 +304,14 @@ class CalcParser(Parser):
     def __init__(self):
         self.names = { }
 
+
+    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY')
+    def main_f(self, p):
+        endFunction()
+
+    @_(' ')
+    def begin(self, p):
+        beginFunction()
 
     @_('asignacion END entrada')
     def entrada(self,p):
