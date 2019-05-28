@@ -294,17 +294,18 @@ class CalcParser(Parser):
     def entrada(self,p):
         pass
 
-    @_('statement END')
+    @_('statement') #Aquí he quitado el END que genera ambigüedad.
     def instruction(self, p):
-        pass
+        print("holaaaaaaaaa")
 
     @_(' ')
     def instruction(self, p):
-        pass
+        print("En epsilon")
 
     @_('WHILE LPAREN empty1 empty2 instruction RKEY') #He sustituido statement por instruction.
     def instruction(selfself, p):
         global labels
+        print("En el while")
         print('jmp final' + str(labelswhile))
         print("final"+str(labels)+":")
         incrementLabel()
@@ -326,7 +327,7 @@ class CalcParser(Parser):
 
     @_('IF LPAREN empty3 LKEY instruction elseif')
     def instruction(self,p):
-        pass
+        print("En el if")
 
     @_('logic RPAREN')
     def empty3(self,p):
@@ -361,6 +362,7 @@ class CalcParser(Parser):
 
     @_('assig rest')
     def linea(self, p):
+        print("ultimo respiro")
         pass
         #manejador.insertVar(p.ID) #Aquí almacenamos la variable.
 
@@ -393,6 +395,7 @@ class CalcParser(Parser):
 
     @_('ID ASSIGN logic END statement')
     def statement(self, p): #Falta buscar el valor en el sistema
+        print("pasando statement")
         manejador.insertValue(p.ID, p.logic)
         NodoAsign(p.ID, p.logic)
         #print('pasando por statement')
@@ -401,6 +404,7 @@ class CalcParser(Parser):
 
     @_('logic')
     def statement(self,p):
+        print("corre")
         return p.logic
     @_(' ')
     def statement(self,p):

@@ -22,8 +22,7 @@ basico ->  MINUS basico | ID | NUM | LPAREN expr RPAREN
 
 
 
-Problema -> Existe recursividad por la izquierda y por la derecha. Tenemos que 
-	conseguir recursividad únicamente por la izquierda. 
+Problema -> Necesitamos anidamiento en los bucles (recursividad). 
 
 instr -> ID '=' expresion | if ( expresion ) instr
  
