@@ -6,8 +6,8 @@ from sly import Lexer, Parser
 tabla = {} #Dictionary
 labels = 0
 labelsif=[]
-labelswhile=[]
 endlabelswhile=[]
+labelswhile=[]
 eax=False
 class Tabla():
     contador = 0
@@ -244,9 +244,22 @@ class NodoLogic():
         if self.op == '>=':
             print("jge L" + str(labels + 1))
 
+class beginFunction():
+    def __init__(self):
+        print('pushl %ebp')
+        print('movl %esp, %ebp')
+
+class endFunction():
+    def __init__(self):
+        print('movl %ebp, %esp')
+        print('popl %ebp')
+        print('movl $0, %eax')
+        print('ret')
+
+
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN}
     ignore = ' \t'
 
     # Tokens
@@ -255,6 +268,7 @@ class CalcLexer(Lexer):
     ID['if'] = IF
     ID['else'] = ELSE
     ID['while'] = WHILE
+    ID['main'] = MAIN
     NUM = r'\d+'
 
     #Aritmetic
@@ -302,6 +316,14 @@ class CalcParser(Parser):
         self.names = { }
 
 
+    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY')
+    def main_f(self, p):
+        endFunction()
+
+    @_(' ')
+    def begin(self, p):
+        beginFunction()
+
     @_('asignacion END entrada')
     def entrada(self,p):
         pass
@@ -322,16 +344,22 @@ class CalcParser(Parser):
     def declaraciontipo(self,p):
         pass
 
-    @_('ID valor restodeclaracion ')
+    @_('ID valor empty5 restodeclaracion ')
     def declaracion(self,p):
+        pass
+
+    @_('')
+    def empty5(self,p):
         global eax
-        eax=False
-        manejador.insertVar(p.ID, p.valor)
+        manejador.insertVar(p[-2], p[-1])#ID, valor
         NodoVariable()
-        print("movl %eax, "+ str(tabla[p.ID][0]) + "(%ebp)")
+        if eax:
+            print("movl %eax, "+ str(tabla[p[-2]][0]) + "(%ebp)")
+            eax=False
+        else:
+            print("movl %ecx, "+ str(tabla[p[-2]][0]) + "(%ebp)")
 
-
-    @_('ID valor restoasignacion')
+    @_('ID valor restoasignacion')#falta empty6
     def asignacion(self, p): #Falta buscar el valor en el sistema
         global eax
         eax=False
@@ -345,14 +373,11 @@ class CalcParser(Parser):
 
     @_('ASSIGN logic')
     def valor(self,p):
-        global eax
-        eax=False
         return p.logic
 
     @_('')
     def valor(self,p):
-        global eax
-        eax=False
+        pass
 
     @_('COMA asignacion')
     def restoasignacion(self,p):
