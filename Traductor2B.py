@@ -279,13 +279,11 @@ class endFunction():
     def __init__(self):
         print('movl %ebp, %esp')
         print('popl %ebp')
-        #print('movl $0, %eax')
         print('ret')
-
 
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN}
     ignore = ' \t'
 
     # Tokens
@@ -296,6 +294,7 @@ class CalcLexer(Lexer):
     ID['else'] = ELSE
     ID['while'] = WHILE
     ID['main'] = MAIN
+    ID['return'] = RETURN
     NUM = r'\d+'
 
     #Aritmetic
@@ -357,11 +356,11 @@ class CalcParser(Parser):
     @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY main_f')
     def main_f(self, p):
         endFunction()
-
+        pass
     @_('TIPO ID begin LPAREN parametro reserva RPAREN LKEY entrada RKEY main_f') #Funcion estándar
     def main_f(self, p):
         endFunction()
-
+        pass
     @_(' ')
     def main_f(self, p):
         pass
@@ -504,6 +503,7 @@ class CalcParser(Parser):
         global counterparameter
         print('call ' + p.ID)
         print('addl ' + str(counterparameter) + ", %esp")
+        resetparameter()
 
     @_(' ')
     def argumentos(self, p):
@@ -520,6 +520,13 @@ class CalcParser(Parser):
 
     @_(' ')
     def restoargumentos(self, p):
+        pass
+
+    @_('RETURN logic END')
+    def instruction(self, p):
+        #print('movl ' + manejador.cadena(p.logic) + ", %eax")
+        #print('ret')
+        #endFunction() Hace falta en la tabla un marcador inicio-fin funcion
         pass
 
     @_('WHILE LPAREN empty1 empty2 entrada RKEY')
