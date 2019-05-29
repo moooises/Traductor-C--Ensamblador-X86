@@ -291,6 +291,7 @@ class CalcLexer(Lexer):
     # Tokens
     ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
     ID['int'] = TIPO
+    ID['void'] = TIPO
     ID['if'] = IF
     ID['else'] = ELSE
     ID['while'] = WHILE
@@ -498,8 +499,31 @@ class CalcParser(Parser):
     def restodeclaracion(self,p):
         pass
 
+    @_('ID LPAREN argumentos RPAREN END')
+    def instruction(self, p):
+        global counterparameter
+        print('call ' + p.ID)
+        print('addl ' + str(counterparameter) + ", %esp")
+
+    @_(' ')
+    def argumentos(self, p):
+        pass
+
+    @_('ID restoargumentos')
+    def argumentos(self, p):
+        print("pushl " + manejador.cadena(p.ID))#p.ID)
+        incrementparameter()
+
+    @_('COMA argumentos')
+    def restoargumentos(self, p):
+        pass
+
+    @_(' ')
+    def restoargumentos(self, p):
+        pass
+
     @_('WHILE LPAREN empty1 empty2 entrada RKEY')
-    def instruction(selfself, p):
+    def instruction(self, p):
         global labels,endlabelswhile
         print('jmp final' + str(labelswhile.pop()))
         print("final"+str(endlabelswhile.pop())+":")
