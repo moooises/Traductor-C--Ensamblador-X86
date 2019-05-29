@@ -422,6 +422,7 @@ class CalcParser(Parser):
         global decla,declavalue,declavar,tabla,longitud
         decla=False
         #for i in range(0,len(declavar)):
+        longitud.reverse()
         for i in range(0,len(declavar)):
             value=declavalue.pop()
             var=declavar[value]
@@ -452,32 +453,27 @@ class CalcParser(Parser):
         vector=False
         declavar.clear()
         del declavalue[:]
+        del longitud[:]
 
-    @_('ID valor dim empty6 restodeclaracion')
+    @_('ID dim valor empty6 restodeclaracion')
     def declaracion(self,p):
-        pass
+        global longitud
+        if int(p.dim)>1 and p.valor!=None:
+            raise NameError('Inicializacion de vector erronea')
+        longitud.append(p.dim)
+
 
     @_('')
     def empty5(self,p):
         global decla
         decla=True
 
-    @_('LCORCHETE NUM RCORCHERTE dim')
-    def dim(self,p):
-        global vector
-        vector=True
-        return p.NUM*p.dim
 
-    @_('')
-    def dim(self,p):
-        return 1
-
-
-    @_(' ID  valor empty7 restoasignacion')#falta empty6
+    @_('ID  valor empty7 restoasignacion')#falta empty6
     def asignacion(self, p): #Falta buscar el valor en el sistema
         pass
 
-    @_('')
+    @_(' ')
     def empty7(self,p):
         global eax,asig,decla
         asig=True
@@ -490,17 +486,25 @@ class CalcParser(Parser):
     def valor(self,p):
         return p.logic
 
+
     @_('')
     def valor(self,p):
         pass
 
+    @_('LCORCHETE NUM RCORCHERTE dim')
+    def dim(self,p):
+        return p.NUM*p.dim
+
+    @_('')
+    def dim(self,p):
+        return 1
+
+
     @_(' ')
     def empty6(self,p):
-        global declavalue,declavar,longitud
-        declavar[p[-3]]=p[-2]
-        declavalue.append(p[-3])
-        longitud.append(p[-1])
-
+        global declavalue,declavar
+        declavar[p[-2]]=p[-1]
+        declavalue.append(p[-2])
 
 
     @_('COMA asignacion ')
