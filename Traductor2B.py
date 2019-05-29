@@ -9,6 +9,16 @@ labelsif=[]
 endlabelswhile=[]
 labelswhile=[]
 eax=False
+counterparameter = 0
+
+def incrementparameter():
+    global counterparameter
+    counterparameter += 4
+
+def resetparameter():
+    global counterparameter
+    counterparameter = 0
+
 class Tabla():
     contador = 0
     global tabla
@@ -245,7 +255,13 @@ class NodoLogic():
             print("jge L" + str(labels + 1))
 
 class beginFunction():
-    def __init__(self):
+    def __init__(self, nombre):
+        #resetparameter()
+        print('.text')
+        print('.globl ' + nombre)
+        print('.type ' + nombre + ", @function")
+        print(nombre + ":")
+
         print('pushl %ebp')
         print('movl %esp, %ebp')
 
@@ -253,7 +269,7 @@ class endFunction():
     def __init__(self):
         print('movl %ebp, %esp')
         print('popl %ebp')
-        print('movl $0, %eax')
+        #print('movl $0, %eax')
         print('ret')
 
 
@@ -315,14 +331,58 @@ class CalcParser(Parser):
     def __init__(self):
         self.names = { }
 
+    #@_('function main_f')
+    #def code(self, p):
+    #    pass
 
-    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY')
+    #@_('TIPO ID LPAREN RPAREN LKEY entrada RKEY')
+    #def function(self, p):
+    #    pass
+
+    #@_(' ')
+    #def function(self,p):
+    #    pass
+
+    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY main_f')
+    def main_f(self, p):
+        endFunction()
+
+    @_('TIPO ID begin LPAREN parametro reserva RPAREN LKEY entrada RKEY main_f') #Funcion estándar
     def main_f(self, p):
         endFunction()
 
     @_(' ')
+    def main_f(self, p):
+        pass
+
+    @_(' ')
     def begin(self, p):
-        beginFunction()
+        #print(p[-1]) #Hell yeah, accedemos al principio.
+        beginFunction(p[-1])
+
+    @_('TIPO ID resto')
+    def parametro(self, p): #PEEERFECTO!!!!!
+        #print('incrementado parametro ' + p.ID)
+        incrementparameter()
+
+    @_(' ')
+    def parametro(self, p):
+        pass
+
+    @_('COMA parametro')
+    def resto(self, p):
+        pass
+
+    @_(' ')
+    def resto(self, p):
+        pass
+
+    @_(' ')
+    def reserva(self, p):
+        global counterparameter
+        if counterparameter != 0:
+            print('subl $' + str(counterparameter) + ", %esp")
+            resetparameter()
 
     @_('asignacion END entrada')
     def entrada(self,p):
@@ -578,5 +638,8 @@ if __name__ == '__main__':
 #entrada -> int a = 3, b =4; a = a +b;
 #entrada -> int a = 3;  a < 3;
 #entrada -> int a = 3, b = 4; while( a >= 3) { a = a + 1; }
+
+#entrada -> int main(){int a;}
+#int funcion(){} int main(){}
 
 #Problemas: La insercion de variables en la pila se hace al reves.
