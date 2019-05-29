@@ -420,7 +420,7 @@ class CalcParser(Parser):
             value=declavalue.pop()
             var=declavar[value]
             if var==None:
-                manejador.insertVar(var,0)#ID, valor
+                manejador.insertVar(value,0)#ID, valor
                 NodoVariable()
             else:
                 if type(var) is int:
