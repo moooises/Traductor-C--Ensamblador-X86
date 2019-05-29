@@ -725,6 +725,16 @@ class CalcParser(Parser):
 if __name__ == '__main__':
     lexer = CalcLexer()
     parser = CalcParser()
+
+    if len(sys.argv) == 2:
+        dir = './' + sys.argv[1]
+        reader = open(dir, 'r')
+        text = reader.read()
+        parser.parse(lexer.tokenize(text))
+    else:
+        print("Este programa necesita un parámetro");
+
+    """
     while True:
         try:
             text = input('calc > ')
@@ -732,7 +742,7 @@ if __name__ == '__main__':
             break
         if text:
             parser.parse(lexer.tokenize(text))
-
+    """
 #entrada -> int a = 3, b = 4; while( a != 3) { a = a + 1; }
 #entrada -> int a = 3, b =4; a = a +b;
 #entrada -> int a = 3;  a < 3;
