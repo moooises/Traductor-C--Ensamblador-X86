@@ -3,7 +3,8 @@ sys.path.append('../..')
 
 from sly import Lexer, Parser
 #usar $ tanto para & como para *
-tabla = {} #Dictionary
+tabla = {}
+contenedor = {} #Diccionario con todas las tablas.
 labels = 0
 labelsif=[]
 endlabelswhile=[]
@@ -25,6 +26,10 @@ def resetparameter():
 
 class Tabla():
     contador = 0
+    #selector = 0
+    #def selectTable(self, id):
+    #    if id in selector:
+    #        self.selector = tabla[id]
 
     def insertVar(self, var, value):
         if var in tabla:
@@ -53,16 +58,7 @@ class Tabla():
         return res
 
 manejador = Tabla()
-"""
 
-def incrementLabel():
-    global labels
-    labels = labels + 1
-    print('L' + str(labels) + ':')
-def decrementLabel(): #Lo uso en el while.
-    global labels
-    labels = labels - 1
-"""
 def incrementLabel():
     global labels
     labels = labels + 1
@@ -367,6 +363,9 @@ class CalcParser(Parser):
 
     @_(' ')
     def begin(self, p):
+        global tabla
+        #manejador.tabla = {}
+        tabla = {}
         #print(p[-1]) #Hell yeah, accedemos al principio.
         beginFunction(p[-1])
 
@@ -741,5 +740,6 @@ if __name__ == '__main__':
 
 #entrada -> int main(){int a;}
 #int funcion(){} int main(){}
+# int funcion(int a, int b){ int a;} int main(){int a;}
 
 #Problemas: La insercion de variables en la pila se hace al reves.
