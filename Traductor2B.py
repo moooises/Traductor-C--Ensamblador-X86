@@ -8,15 +8,20 @@ labels = 0
 labelsif=[]
 endlabelswhile=[]
 labelswhile=[]
+decla=False
+asig=False
 eax=False
+declavar={}
+declavalue=[]
+
 class Tabla():
     contador = 0
-    global tabla
+
     def insertVar(self, var, value):
         if var in tabla:
             raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
         else:
-            self.contador -= 4
+            self.contador-= 4
             tabla[var] = [self.contador, value,]
 
     def insertValue(self, var, value):
@@ -67,7 +72,13 @@ class NodoAsign():
         if valor == None:
             print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
         else:
-            print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+            if type(valor) is str:
+                print("movl "+str(tabla[valor][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
+            else:
+                if eax:
+                    print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                else:
+                    print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
 
 class NodoSuma():
     def __init__(self):
@@ -324,7 +335,7 @@ class CalcParser(Parser):
     def begin(self, p):
         beginFunction()
 
-    @_('asignacion END entrada')
+    @_('asignacion END  entrada')
     def entrada(self,p):
         pass
 
@@ -340,36 +351,62 @@ class CalcParser(Parser):
     def entrada(self,p):
         pass
 
-    @_('TIPO declaracion')
+    @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
-        pass
+        global decla,declavalue,declavar,tabla
+        decla=False
+        #for i in range(0,len(declavar)):
+        for i in range(0,len(declavar)):
+            value=declavalue.pop()
+            var=declavar[value]
+            if var==None:
+                manejador.insertVar(var,0)#ID, valor
+                NodoVariable()
+            else:
+                if type(var) is int:
+                    manejador.insertVar(value,var)#ID, valor
+                    NodoVariable()
+                    print("movl $"+str(var)+", %eax")
+                    print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
+                else:
+                    if type(value) is str:
+                        try:
+                            manejador.insertVar(value,declavar[var])#ID, valor
+                            NodoVariable()
+                            print("movl $"+str(declavar[var])+", %eax")
+                            print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
+                        except:
+                            manejador.insertVar(value,tabla[var][1])#ID, valor
+                            NodoVariable()
+                            print("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)")
+                    else:
+                        manejador.insertVar(var,0)#ID, valor
+                        NodoVariable()
 
-    @_('ID valor empty5 restodeclaracion ')
+        declavar.clear()
+        del declavalue[:]
+
+    @_('ID valor empty6 restodeclaracion')
     def declaracion(self,p):
         pass
 
     @_('')
     def empty5(self,p):
-        global eax
-        manejador.insertVar(p[-2], p[-1])#ID, valor
-        NodoVariable()
-        if eax:
-            print("movl %eax, "+ str(tabla[p[-2]][0]) + "(%ebp)")
-            eax=False
-        else:
-            print("movl %ecx, "+ str(tabla[p[-2]][0]) + "(%ebp)")
+        global decla
+        decla=True
 
-    @_('ID valor restoasignacion')#falta empty6
+    @_(' ID  valor empty7 restoasignacion')#falta empty6
     def asignacion(self, p): #Falta buscar el valor en el sistema
-        global eax
+        pass
+
+    @_('')
+    def empty7(self,p):
+        global eax,asig,decla
+        asig=True
+        manejador.insertValue(p[-2], p[-1])
+        NodoAsign(p[-2], p[-1])
+        asig=False
         eax=False
-        manejador.insertValue(p.ID, p.valor)
-        NodoAsign(p.ID, p.valor)
-
-
-        #print('pasando por statement')
-        #tabla[p.ID][1] = p.logic
-        #print(tabla[p.ID])
 
     @_('ASSIGN logic')
     def valor(self,p):
@@ -379,15 +416,22 @@ class CalcParser(Parser):
     def valor(self,p):
         pass
 
-    @_('COMA asignacion')
+    @_(' ')
+    def empty6(self,p):
+        global declavalue,declavar
+        declavar[p[-2]]=p[-1]
+        declavalue.append(p[-2])
+
+    @_('COMA asignacion ')
     def restoasignacion(self,p):
         pass
 
     @_('')
     def restoasignacion(self,p):
-        pass
+        global asig
+        asig=False
 
-    @_('COMA declaracion')
+    @_('COMA declaracion ')
     def restodeclaracion(self,p):
         pass
 
@@ -449,34 +493,22 @@ class CalcParser(Parser):
         labelsif.append(labels)
         incrementLabel()
 
-    """
-    @_('ID rest')
-    def linea(self, p):
-        manejador.insertVar(p.ID, 0)
-        NodoVariable()
-
-
-    @_('ID ASSIGN logic')
-    def assig(self,p):
-        global eax
-        manejador.insertVar(p.ID, p.logic)
-        NodoVariable()
-        print("movl %eax, "+ str(tabla[p.ID][0]) + "(%ebp)")
-        eax=False
-        #NodoAsign(p.ID, p.logic)
-        #print(tabla[p.ID])
-    """
-
     @_('logic EQUAL logicpr')
     def logic(self, p):
         NodoEqual()
-        return p.logic != p.logicpr
+        if type(p.logic) is str:
+            return tabla[p.logic][1]==p.logicpr
+        else:
+            return p.logic == p.logicpr
         #return NodoLogic(p.logic, p.EQUAL, p.logicpr)
 
     @_('logic NEQUAL logicpr')
     def logic(self, p):
         NodoNequal()
-        return p.logic != p.logicpr
+        if type(p.logic) is str:
+            return tabla[p.logic][1]!=p.logicpr
+        else:
+            return p.logic != p.logicpr
 
     @_('logicpr')
     def logic(self, p):
@@ -485,22 +517,34 @@ class CalcParser(Parser):
     @_('logicpr LESSOREQUAL expr')
     def logicpr(self, p):
         NodoSmallerEqual()
-        return p.logicpr <= p.expr
+        if type(p.logicpr) is str:
+            return tabla[p.logicpr][1]<=p.pexpr
+        else:
+            return p.logicpr <= p.expr
 
     @_('logicpr BIGGEROREQUAL expr')
     def logicpr(self, p):
         NodoGreaterEqual()
-        return p.logicpr >= p.expr
+        if type(p.logicpr) is str:
+            return tabla[p.logicpr][1]>=p.pexpr
+        else:
+            return p.logicpr >= p.expr
 
     @_('logicpr GREATER expr')
     def logicpr(self, p):
         NodoGreater()
-        return p.logicpr > p.expr
+        if type(p.logicpr) is str:
+            return tabla[p.logicpr][1]>p.pexpr
+        else:
+            return p.logicpr > p.expr
 
     @_('logicpr LESS expr')
     def logicpr(self, p):
         NodoSmaller()
-        return p.logicpr < p.expr
+        if type(p.logicpr) is str:
+            return tabla[p.logicpr][1]<p.pexpr
+        else:
+            return p.logicpr < p.expr
 
     @_('expr')
     def logicpr(self, p):
@@ -508,13 +552,20 @@ class CalcParser(Parser):
 
     @_('expr PLUS fact')
     def expr(self, p):
+        global tabla,eax
         NodoSuma()
-        return p.expr+p.fact
+        if type(p.expr) is str:
+            return tabla[p.expr][1]+p.fact
+        else:
+            return p.expr+p.fact
 
     @_('expr MINUS fact')
     def expr(self, p):
         NodoResta()
-        return p.expr-p.fact #p.expr0 - p.expr1
+        if type(p.expr) is str:
+            return tabla[p.expr][1]-p.fact
+        else:
+            return p.expr-p.fact #p.expr0 - p.expr1
 
     @_('fact')
     def expr(self, p):
@@ -523,12 +574,18 @@ class CalcParser(Parser):
     @_('fact TIMES basico')
     def fact(self, p):
         NodoProducto()
-        return p.fact*p.basico
+        if type(p.fact) is str:
+            return tabla[p.fact][1]*p.basico
+        else:
+            return p.fact*p.basico
 
     @_('fact DIVIDE basico')
     def fact(self, p):
         NodoDivision()
-        return p.fact/p.basico
+        if type(p.fact) is str:
+            return tabla[p.fact][1]/p.basico
+        else:
+            return p.fact/p.basico
 
     @_('basico')
     def fact(self, p):
@@ -541,22 +598,35 @@ class CalcParser(Parser):
 
     @_('ID') #Uso de la variable
     def basico(self, p): #Si el id no esta en la tabla, debe mostrar error.
-        global eax
-        if eax:
-            print("movl "+str(tabla[p.ID][0])+"(%ebp), %ecx")
+        global eax,decla,asig
+        if not decla:
+            if not asig:
+                if eax:
+                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %ecx")
+                else:
+                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %eax")
+                    eax=True
+                return tabla[p.ID][1]
+            else:
+                if eax:
+                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %ecx")
+                else:
+                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %eax")
+                    eax=True
+                asig=True
+                return p.ID
         else:
-            print("movl "+str(tabla[p.ID][0])+"(%ebp), %eax")
-            eax=True
-        return tabla[p.ID][1]
+            return p.ID
 
     @_('NUM')
     def basico(self, p):
-        global eax
-        if eax:
-            print("movl $"+str(p.NUM)+", %ecx")
-        else:
-            print("movl $"+str(p.NUM)+", %eax")
-            eax=True
+        global eax,decla
+        if not decla:
+            if eax:
+                print("movl $"+str(p.NUM)+", %ecx")
+            else:
+                print("movl $"+str(p.NUM)+", %eax")
+                eax=True
         return int(p.NUM)
 
     @_('LPAREN expr RPAREN')
