@@ -1,0 +1,8 @@
+Es necesario distinguir el main del resto de funciones? Si, porque varía el numero de paramétros. 
+
+-> Soluciono definiendo múltiples main_f. En un primer momento planteo 
+
+code -> function main_f 
+function -> ' ' | TIPO ID LPAREN RPAREN LKEY RKEY 
+
+pero genera conflicto shift/reduce.
