@@ -12,6 +12,8 @@ labelswhile=[]
 decla=False
 asig=False
 eax=False
+longitud=[]
+vector=False
 counterparameter = 0
 declavar={}
 declavalue=[]
@@ -31,12 +33,15 @@ class Tabla():
     #    if id in selector:
     #        self.selector = tabla[id]
 
-    def insertVar(self, var, value):
+    def insertVar(self, var, value,tam):
         if var in tabla:
             raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
         else:
             self.contador-= 4
             tabla[var] = [self.contador, value,]
+            aumento=int(tam)-1
+            aumento=4*aumento
+            self.contador-=aumento
 
     def insertValue(self, var, value):
         if var in tabla:
@@ -69,8 +74,9 @@ def decrementLabel(): #Lo uso en el while.
 
 
 class NodoVariable():
-    def __init__(self):
-        print("subl $4, %esp")
+    def __init__(self,tam):
+        tam=int(tam)
+        print("subl $"+str(4*tam)+", %esp")
 
 class NodoAsign():
     def __init__(self, variable, valor):
@@ -279,7 +285,7 @@ class endFunction():
 
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN,RCORCHERTE,LCORCHETE}
     ignore = ' \t'
 
     # Tokens
@@ -311,6 +317,8 @@ class CalcLexer(Lexer):
     RKEY = r'}'
     COMA = r','
     END = r';'
+    RCORCHERTE=r'\]'
+    LCORCHETE=r'\['
 
 
     # Ignored pattern
@@ -411,40 +419,41 @@ class CalcParser(Parser):
 
     @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
-        global decla,declavalue,declavar,tabla
+        global decla,declavalue,declavar,tabla,longitud
         decla=False
         #for i in range(0,len(declavar)):
         for i in range(0,len(declavar)):
             value=declavalue.pop()
             var=declavar[value]
+            tam=longitud.pop()
             if var==None:
-                manejador.insertVar(value,0)#ID, valor
-                NodoVariable()
+                manejador.insertVar(value,0,tam)#ID, valor
+                NodoVariable(tam)
             else:
                 if type(var) is int:
-                    manejador.insertVar(value,var)#ID, valor
-                    NodoVariable()
+                    manejador.insertVar(value,var,tam)#ID, valor
+                    NodoVariable(tam)
                     print("movl $"+str(var)+", %eax")
                     print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
                 else:
                     if type(value) is str:
                         try:
-                            manejador.insertVar(value,declavar[var])#ID, valor
-                            NodoVariable()
+                            manejador.insertVar(value,declavar[var],tam)#ID, valor
+                            NodoVariable(tam)
                             print("movl $"+str(declavar[var])+", %eax")
                             print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
                         except:
-                            manejador.insertVar(value,tabla[var][1])#ID, valor
-                            NodoVariable()
+                            manejador.insertVar(value,tabla[var][1],tam)#ID, valor
+                            NodoVariable(tam)
                             print("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)")
                     else:
-                        manejador.insertVar(var,0)#ID, valor
-                        NodoVariable()
-
+                        manejador.insertVar(var,0,tam)#ID, valor
+                        NodoVariable(tam)
+        vector=False
         declavar.clear()
         del declavalue[:]
 
-    @_('ID valor empty6 restodeclaracion')
+    @_('ID valor dim empty6 restodeclaracion')
     def declaracion(self,p):
         pass
 
@@ -452,6 +461,17 @@ class CalcParser(Parser):
     def empty5(self,p):
         global decla
         decla=True
+
+    @_('LCORCHETE NUM RCORCHERTE dim')
+    def dim(self,p):
+        global vector
+        vector=True
+        return p.NUM*p.dim
+
+    @_('')
+    def dim(self,p):
+        return 1
+
 
     @_(' ID  valor empty7 restoasignacion')#falta empty6
     def asignacion(self, p): #Falta buscar el valor en el sistema
@@ -476,9 +496,12 @@ class CalcParser(Parser):
 
     @_(' ')
     def empty6(self,p):
-        global declavalue,declavar
-        declavar[p[-2]]=p[-1]
-        declavalue.append(p[-2])
+        global declavalue,declavar,longitud
+        declavar[p[-3]]=p[-2]
+        declavalue.append(p[-3])
+        longitud.append(p[-1])
+
+
 
     @_('COMA asignacion ')
     def restoasignacion(self,p):

@@ -1,4 +1,4 @@
 int main()
-{ 
-	int a, b, c; 
+{
+	int b=1,a[3];
 }
