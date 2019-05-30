@@ -9,10 +9,12 @@ labels = 0
 labelsif=[]
 endlabelswhile=[]
 labelswhile=[]
+tablaVectores={}
 decla=False
 asig=False
 eax=False
 longitud=[]
+vectores={}
 vector=False
 counterparameter = 0
 declavar={}
@@ -37,17 +39,37 @@ class Tabla():
         if var in tabla:
             raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
         else:
-            self.contador-= 4
-            tabla[var] = [self.contador, value,]
-            aumento=int(tam)-1
-            aumento=4*aumento
-            self.contador-=aumento
+            if int(tam)<=1:
+                self.contador-= 4
+                tabla[var] = [self.contador, value]
+            else:
+                for i in range(0,int(tam)):
+                    self.contador-= 4
+                    if i==0:
+                        tabla[var] = [self.contador, 0]
+                    else:
+                        tabla[var+str(i)]=[self.contador, 0]
 
-    def insertValue(self, var, value):
+    def insertValue(self, var, value,tam):
         if var in tabla:
-            tabla[var][1] = value #Modificamos el campo valor de la variable.
+            if tam<=-1:
+                tabla[var][1] = value #Modificamos el campo valor de la variable.
+            else:
+                if tam==0:
+                    tabla[var][1] = value
+                else:
+                    tabla[var+str(tam)][1] = value
+
+                #for i in range(0,vectores[var]):
+                #    if i==0:
+                #        if tabla[var][2]==tam:
+                #            tabla[var][1] = value
+                #    else:
+                #        if tabla[var+str(i)][2]==tam:
+
         else:
             raise NameError('Variable ' + "\"" + str(var) + "\"" + 'no declarada')
+        #print(tabla)
 
     def compVar(self, var):
         if var in tabla:
@@ -76,20 +98,37 @@ def decrementLabel(): #Lo uso en el while.
 class NodoVariable():
     def __init__(self,tam):
         tam=int(tam)
+        if tam==-1:
+            tam=1
         print("subl $"+str(4*tam)+", %esp")
 
 class NodoAsign():
-    def __init__(self, variable, valor):
-        if valor == None:
-            print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
-        else:
-            if type(valor) is str:
-                print("movl "+str(tabla[valor][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
+    def __init__(self, variable, valor,tam):
+        if tam<=-1:
+            if valor == None:
+                print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
             else:
-                if eax:
-                    print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                if type(valor) is str:
+                    print("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
                 else:
-                    print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+                    if eax:
+                        print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                    else:
+                        print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+        else:
+            if tam>0:
+                variable=variable+str(tam)
+            if valor == None:
+                print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
+            else:
+                if type(valor) is str:
+                    print("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
+                else:
+                    if eax:
+                        print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                    else:
+                        print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+
 
 class NodoSuma():
     def __init__(self):
@@ -419,7 +458,7 @@ class CalcParser(Parser):
 
     @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
-        global decla,declavalue,declavar,tabla,longitud
+        global decla,declavalue,declavar,tabla,longitud,tablaVectores,vectores
         decla=False
         #for i in range(0,len(declavar)):
         longitud.reverse()
@@ -427,6 +466,9 @@ class CalcParser(Parser):
             value=declavalue.pop()
             var=declavar[value]
             tam=longitud.pop()
+            if tam>=1:
+                vectores[value]=tam
+
             if var==None:
                 manejador.insertVar(value,0,tam)#ID, valor
                 NodoVariable(tam)
@@ -446,19 +488,22 @@ class CalcParser(Parser):
                         except:
                             manejador.insertVar(value,tabla[var][1],tam)#ID, valor
                             NodoVariable(tam)
-                            print("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)")
+                            if(tam>0):
+                                print("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)")
+
                     else:
                         manejador.insertVar(var,0,tam)#ID, valor
                         NodoVariable(tam)
+
         vector=False
         declavar.clear()
         del declavalue[:]
         del longitud[:]
 
-    @_('ID dim valor empty6 restodeclaracion')
+    @_('ID dim valordec empty6 restodeclaracion')
     def declaracion(self,p):
         global longitud
-        if int(p.dim)>1 and p.valor!=None:
+        if int(p.dim)>1 and p.valordec!=None:
             raise NameError('Inicializacion de vector erronea')
         longitud.append(p.dim)
 
@@ -469,42 +514,83 @@ class CalcParser(Parser):
         decla=True
 
 
-    @_('ID  valor empty7 restoasignacion')#falta empty6
+    @_('ID dimasig valorasig empty7 restoasignacion')#falta empty6
     def asignacion(self, p): #Falta buscar el valor en el sistema
         pass
 
     @_(' ')
     def empty7(self,p):
-        global eax,asig,decla
+        global eax,asig,decla,vectores
+        tam=-1
+        if int(p[-2])>-1:
+            v=vectores[p[-3]]
+            if v!=None:
+                if int(p[-2])>v or int(p[-2])<0:
+                    raise NameError('Sobrepasada la longitud del vector '+p[-3])
+                else:
+                    tam=int(p[-2])
+            else:
+                raise NameError('Variable '+p[-3]+' no es un vector')
+
+
         asig=True
-        manejador.insertValue(p[-2], p[-1])
-        NodoAsign(p[-2], p[-1])
+        manejador.insertValue(p[-3], p[-1],tam)
+        NodoAsign(p[-3], p[-1],tam)
         asig=False
         eax=False
 
-    @_('ASSIGN logic')
-    def valor(self,p):
-        return p.logic
+    @_('ASSIGN logic dimasig')
+    def valordec(self,p):
+        if p.dimasig>-1:
+            if p.dimasig==0:
+                return tabla[p[-5]][1]
+            else:
+                return tabla[p[-5]+str(p.dimasig)][1]
+        else:
+            return p.logic
 
 
     @_('')
-    def valor(self,p):
+    def valordec(self,p):
+        pass
+
+    @_('ASSIGN logic dimasig')
+    def valorasig(self,p):
+        if p.dimasig>1:
+            if p.dimasig==0:
+                return tabla[p[-5]][1]
+            else:
+                return tabla[p[-5]+str(p.dimasig)][1]
+        else:
+            return p.logic
+
+
+    @_('')
+    def valorasig(self,p):
         pass
 
     @_('LCORCHETE NUM RCORCHERTE dim')
     def dim(self,p):
-        return p.NUM*p.dim
-
+            return int(p.NUM)*p.dim
     @_('')
     def dim(self,p):
         return 1
 
+    @_('LCORCHETE NUM RCORCHERTE dimasig')
+    def dimasig(self,p):
+        if int(p.NUM)==1 and p.dimasig==-1:
+             return 1
+        else:
+            return int(p.NUM)*p.dimasig
+    @_('')
+    def dimasig(self,p):
+        return -1
 
     @_(' ')
     def empty6(self,p):
         global declavalue,declavar
-        declavar[p[-2]]=p[-1]
-        declavalue.append(p[-2])
+        declavar[p[-3]]=p[-1]
+        declavalue.append(p[-3])
 
 
     @_('COMA asignacion ')
@@ -712,27 +798,30 @@ class CalcParser(Parser):
         NodoNeg()
         return -p.basico
 
-    @_('ID') #Uso de la variable
+    @_('ID dimasig') #Uso de la variable
     def basico(self, p): #Si el id no esta en la tabla, debe mostrar error.
         global eax,decla,asig
+        var=p.ID
+        if p.dimasig>0:
+            var=var+str(p.dimasig)
         if not decla:
             if not asig:
                 if eax:
-                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %ecx")
+                    print("movl "+str(tabla[var][0])+"(%ebp), %ecx")
                 else:
-                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %eax")
+                    print("movl "+str(tabla[var][0])+"(%ebp), %eax")
                     eax=True
-                return tabla[p.ID][1]
+                return tabla[var][1]
             else:
                 if eax:
-                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %ecx")
+                    print("movl "+str(tabla[var][0])+"(%ebp), %ecx")
                 else:
-                    print("movl "+str(tabla[p.ID][0])+"(%ebp), %eax")
+                    print("movl "+str(tabla[var][0])+"(%ebp), %eax")
                     eax=True
                 asig=True
-                return p.ID
+                return var
         else:
-            return p.ID
+            return var
 
     @_('NUM')
     def basico(self, p):
