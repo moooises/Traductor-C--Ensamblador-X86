@@ -4,6 +4,7 @@ sys.path.append('../..')
 from sly import Lexer, Parser
 #usar $ tanto para & como para *
 tabla = {}
+tablaGlobal = {}
 contenedor = {} #Diccionario con todas las tablas.
 labels = 0
 labelsprintf=0
@@ -48,29 +49,29 @@ def stackvariable():
             vectores[value] = tam
 
         if var == None:
-            manejador.insertVar(value, 0, tam)  # ID, valor
+            manejador.insertVar(value, 0, tam, 0)  # ID, valor
             NodoVariable(tam)
         else:
             if type(var) is int:
-                manejador.insertVar(value, var, tam)  # ID, valor
+                manejador.insertVar(value, var, tam, 0)  # ID, valor
                 NodoVariable(tam)
                 f.write("movl $" + str(var) + ", %eax\n")
                 f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
             else:
                 if type(value) is str:
                     try:
-                        manejador.insertVar(value, declavar[var], tam)  # ID, valor
+                        manejador.insertVar(value, declavar[var], tam, 0)  # ID, valor
                         NodoVariable(tam)
                         f.write("movl $" + str(declavar[var]) + ", %eax\n")
                         f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
                     except:
-                        manejador.insertVar(value, tabla[var][1], tam)  # ID, valor
+                        manejador.insertVar(value, tabla[var][1], tam, 0)  # ID, valor
                         NodoVariable(tam)
                         if (tam > 0):
                             f.write("movl  " + str(tabla[var][0]) + "(%ebp), " + str(tabla[value][0]) + "(%ebp)\n")
 
                 else:
-                    manejador.insertVar(var, 0, tam)  # ID, valor
+                    manejador.insertVar(var, 0, tam, 0)  # ID, valor
                     NodoVariable(tam)
 
     vector = False
@@ -83,20 +84,35 @@ class Tabla():
     def aumentarcontador(self):
         self.contador-=4
 
-    def insertVar(self, var, value,tam):
-        if var in tabla:
-            raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
-        else:
-            if int(tam)<=1:
-                self.contador-= 4
-                tabla[var] = [self.contador, value]
+    def insertVar(self, var, value,tam, ambito):
+        if ambito == 0: #Ambito local
+            if var in tabla:
+                raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
             else:
-                for i in range(0,int(tam)):
+                if int(tam)<=1:
                     self.contador-= 4
-                    if i==0:
-                        tabla[var] = [self.contador, 0]
-                    else:
-                        tabla[var+str(i)]=[self.contador, 0]
+                    tabla[var] = [self.contador, value]
+                else:
+                    for i in range(0,int(tam)):
+                        self.contador-= 4
+                        if i==0:
+                            tabla[var] = [self.contador, 0]
+                        else:
+                            tabla[var+str(i)]=[self.contador, 0]
+        else:
+            if var in tablaGlobal:
+                raise NameError('Variable ' + "\"" + str(var) + "\"" + ' declarada anteriormente')
+            else:
+                if int(tam)<=1:
+                    self.contador-= 4
+                    tablaGlobal[var] = [self.contador, value]
+                else:
+                    for i in range(0,int(tam)):
+                        self.contador-= 4
+                        if i==0:
+                            tablaGlobal[var] = [self.contador, 0]
+                        else:
+                            tablaGlobal[var+str(i)]=[self.contador, 0]
 
     def insertValue(self, var, value,tam):
         if var in tabla:
@@ -108,8 +124,17 @@ class Tabla():
                 else:
                     tabla[var+str(tam)][1] = value
 
-        else:
-            raise NameError('Variable ' + "\"" + str(var) + "\"" + 'no declarada')
+        else: #Si no esta en la función puede ser una función global.
+            if var in tablaGlobal:
+                if tam <= -1:
+                    tablaGlobal[var][1] = value  # Modificamos el campo valor de la variable.
+                else:
+                    if tam == 0:
+                        tablaGlobal[var][1] = value
+                    else:
+                        tablaGlobal[var + str(tam)][1] = value
+            else:
+                raise NameError('Variable ' + "\"" + str(var) + "\"" + 'no declarada')
 
     def compVar(self, var):
         if var in tabla:
@@ -432,7 +457,15 @@ class CalcParser(Parser):
 
     def __init__(self):
         self.names = { }
+    """
+    @_('declaraciontipo END jolin')
+    def main_f(self, p):
+        pass
 
+    @_(' ')
+    def jolin(self, p):
+        print("Zopotamadreeee")
+    """
     @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY  empty11 main_f')
     def main_f(self, p):
         pass
@@ -486,53 +519,7 @@ class CalcParser(Parser):
             f.write('subl $' + str(counterparameter) + ", %esp\n")
             resetparameter()
         stackvariable()
-        """
-        global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
-        decla = False
-        longitud.reverse()
-        #print('Longitud')
-        #for i in range(0,len(longitud)):
-        #    print(longitud[i])
-        #print('Fin de longitud')
-        #print("Longitud " + longitud)
-        for i in range(0, len(declavar)):
-            value = declavalue.pop()
-            var = declavar[value]
-            tam = longitud.pop()
-            if tam >= 1:
-                vectores[value] = tam
 
-            if var == None:
-                manejador.insertVar(value, 0, tam)  # ID, valor
-                NodoVariable(tam)
-            else:
-                if type(var) is int:
-                    manejador.insertVar(value, var, tam)  # ID, valor
-                    NodoVariable(tam)
-                    f.write("movl $" + str(var) + ", %eax\n")
-                    f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
-                else:
-                    if type(value) is str:
-                        try:
-                            manejador.insertVar(value, declavar[var], tam)  # ID, valor
-                            NodoVariable(tam)
-                            f.write("movl $" + str(declavar[var]) + ", %eax\n")
-                            f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
-                        except:
-                            manejador.insertVar(value, tabla[var][1], tam)  # ID, valor
-                            NodoVariable(tam)
-                            if (tam > 0):
-                                f.write("movl  " + str(tabla[var][0]) + "(%ebp), " + str(tabla[value][0]) + "(%ebp)\n")
-
-                    else:
-                        manejador.insertVar(var, 0, tam)  # ID, valor
-                        NodoVariable(tam)
-
-        vector = False
-        declavar.clear()
-        del declavalue[:]
-        del longitud[:]
-        """
     @_('asignacion END  entrada')
     def entrada(self,p):
         pass
@@ -621,48 +608,8 @@ class CalcParser(Parser):
     @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
         stackvariable()
-        """
-        global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
-        decla=False
-        longitud.reverse()
-        for i in range(0,len(declavar)):
-            value=declavalue.pop()
-            var=declavar[value]
-            tam=longitud.pop()
-            if tam>=1:
-                vectores[value]=tam
 
-            if var==None:
-                manejador.insertVar(value,0,tam)#ID, valor
-                NodoVariable(tam)
-            else:
-                if type(var) is int:
-                    manejador.insertVar(value,var,tam)#ID, valor
-                    NodoVariable(tam)
-                    f.write("movl $"+str(var)+", %eax\n")
-                    f.write("movl %eax, "+ str(tabla[value][0]) + "(%ebp)\n")
-                else:
-                    if type(value) is str:
-                        try:
-                            manejador.insertVar(value,declavar[var],tam)#ID, valor
-                            NodoVariable(tam)
-                            f.write("movl $"+str(declavar[var])+", %eax\n")
-                            f.write("movl %eax, "+ str(tabla[value][0]) + "(%ebp)\n")
-                        except:
-                            manejador.insertVar(value,tabla[var][1],tam)#ID, valor
-                            NodoVariable(tam)
-                            if(tam>0):
-                                f.write("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)\n")
 
-                    else:
-                        manejador.insertVar(var,0,tam)#ID, valor
-                        NodoVariable(tam)
-
-        vector=False
-        declavar.clear()
-        del declavalue[:]
-        del longitud[:]
-        """
     @_('ID dim valordec empty6 restodeclaracion')
     def declaracion(self,p):
         global longitud
