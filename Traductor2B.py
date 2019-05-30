@@ -36,6 +36,7 @@ def resetparameter():
     global counterparameter
     counterparameter = 0
 
+
 class Tabla():
     contador = 0
     #selector = 0
@@ -403,18 +404,6 @@ class CalcParser(Parser):
     def __init__(self):
         self.names = { }
 
-    #@_('function main_f')
-    #def code(self, p):
-    #    pass
-
-    #@_('TIPO ID LPAREN RPAREN LKEY entrada RKEY')
-    #def function(self, p):
-    #    pass
-
-    #@_(' ')
-    #def function(self,p):
-    #    pass
-
     @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY  empty11 main_f')
     def main_f(self, p):
         pass
@@ -440,6 +429,12 @@ class CalcParser(Parser):
 
     @_('TIPO ID resto')
     def parametro(self, p): #PEEERFECTO!!!!!
+        global declavalue, declavar, longitud
+        print("GUARDANDO EN LA TABLA" + str(p.ID) + " = " + str(p[-1]))
+        declavar[p.ID] = 1
+        declavalue.append(p.ID)
+        longitud.append(1);
+
         #f.write('incrementado parametro ' + p.ID)
         incrementparameter()
 
@@ -461,6 +456,52 @@ class CalcParser(Parser):
         if counterparameter != 0:
             f.write('subl $' + str(counterparameter) + ", %esp\n")
             resetparameter()
+
+        global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
+        decla = False
+        longitud.reverse()
+        #print('Longitud')
+        #for i in range(0,len(longitud)):
+        #    print(longitud[i])
+        #print('Fin de longitud')
+        #print("Longitud " + longitud)
+        for i in range(0, len(declavar)):
+            value = declavalue.pop()
+            var = declavar[value]
+            tam = longitud.pop()
+            if tam >= 1:
+                vectores[value] = tam
+
+            if var == None:
+                manejador.insertVar(value, 0, tam)  # ID, valor
+                NodoVariable(tam)
+            else:
+                if type(var) is int:
+                    manejador.insertVar(value, var, tam)  # ID, valor
+                    NodoVariable(tam)
+                    f.write("movl $" + str(var) + ", %eax\n")
+                    f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
+                else:
+                    if type(value) is str:
+                        try:
+                            manejador.insertVar(value, declavar[var], tam)  # ID, valor
+                            NodoVariable(tam)
+                            f.write("movl $" + str(declavar[var]) + ", %eax\n")
+                            f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
+                        except:
+                            manejador.insertVar(value, tabla[var][1], tam)  # ID, valor
+                            NodoVariable(tam)
+                            if (tam > 0):
+                                f.write("movl  " + str(tabla[var][0]) + "(%ebp), " + str(tabla[value][0]) + "(%ebp)\n")
+
+                    else:
+                        manejador.insertVar(var, 0, tam)  # ID, valor
+                        NodoVariable(tam)
+
+        vector = False
+        declavar.clear()
+        del declavalue[:]
+        del longitud[:]
 
     @_('asignacion END  entrada')
     def entrada(self,p):
@@ -549,9 +590,8 @@ class CalcParser(Parser):
 
     @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
-        global decla,declavalue,declavar,tabla,longitud,tablaVectores,vectores
+        global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
         decla=False
-        #for i in range(0,len(declavar)):
         longitud.reverse()
         for i in range(0,len(declavar)):
             value=declavalue.pop()
@@ -730,9 +770,6 @@ class CalcParser(Parser):
 
     @_('RETURN logic END')
     def instruction(self, p):
-        #f.write('movl ' + manejador.cadena(p.logic) + ", %eax")
-        #f.write('ret')
-        #endFunction() Hace falta en la tabla un marcador inicio-fin funcion
         pass
 
     @_('WHILE LPAREN empty1 empty2 entrada RKEY')
