@@ -7,6 +7,7 @@ tabla = {}
 contenedor = {} #Diccionario con todas las tablas.
 labels = 0
 labelsprintf=0
+nivel=1
 varprintf=[]
 valueprintf=[]
 labelsif=[]
@@ -588,8 +589,11 @@ class CalcParser(Parser):
 
     @_('')
     def empty5(self,p):
-        global decla
+        global decla,nivel
+        if nivel!=1:
+            raise NameError("Declaracion anidada")
         decla=True
+
 
 
     @_('ID dimasig valorasig empty7 restoasignacion')#falta empty6
@@ -721,16 +725,18 @@ class CalcParser(Parser):
 
     @_('WHILE LPAREN empty1 empty2 entrada RKEY')
     def instruction(self, p):
-        global labels,endlabelswhile
+        global labels,endlabelswhile,nivel
         f.write('jmp final' + str(labelswhile.pop())+"\n")
         f.write("final"+str(endlabelswhile.pop())+":\n")
         incrementLabel()
         global eax
         eax=False
+        nivel-=1
 
     @_(" ")
     def empty1(self, p):
-        global labels,labelswhile,endlabelswhile
+        global labels,labelswhile,endlabelswhile,nivel
+        nivel+=1
         f.write("final"+str(labels)+":\n")
         labelswhile.append(labels)
         incrementLabel() #Imprimir la etiqueta actual
@@ -747,10 +753,12 @@ class CalcParser(Parser):
     def instruction(self,p):
         global eax
         eax=False
+        nivel-=1
 
     @_('logic RPAREN')
     def empty3(self,p):
-        global eax
+        global eax,nivel
+        nivel+=1
         eax=False
         NodoIf()
 
