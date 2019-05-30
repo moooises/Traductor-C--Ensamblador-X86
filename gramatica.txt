@@ -1,0 +1,90 @@
+main_f-> TIPO MAIN LPAREN RPAREN LKEY entrada RKEY main_f
+         |TIPO ID LPAREN parametro RPAREN LKEY entrada RKEY  main_f
+         | epsilon
+
+parametro -> TIPO ID resto
+          | epsilon
+
+resto-> COMA parametro | epsilon
+
+entrada-> asignacion END entrada
+          |declaraciontipo END entrada
+          |intruction entrada
+          |imprimir END entrada
+          | escanear END entrada
+          | epsilon
+
+imprimir -> PRINTF LPAREN CADENA idextra RPAREN
+
+escanear -> SCANF LPAREN CADENA idextra RPAREN
+
+idextra-> COMA basico idextra
+          |COMA DIRECC basico idextra
+          | epsilon
+
+declaraciotipo -> TIPO declaracion
+
+declaracion-> ID dim valordec restodeclaracion
+
+restodeclaracion -> COMA declaracion
+                    | epsilon
+
+valordec -> ASSIGN logic dimasig
+            |epsilon
+
+valorasig -> ASSIGN logic dimasig
+            |epsilon
+
+dim -> LCORCHETE NUM RCORCHERTE dim
+      | epsilon
+
+dim -> LCORCHETE NUM RCORCHERTE dimasig
+      | epsilon
+
+asignacion -> ID dimasig valorasig restoasignacion
+
+restoasignacion -> COMA asignacion
+                  | epsilon
+
+instruction -> ID LPAREN logic RPAREN argumentos RPAREN end
+              | RETURN logic END
+              | WHILE LPAREN entrada RKEY
+              | IF LPAREN logic RPAREN LKEY entrada RKEY elseif
+
+elseif -> ELSE LKEY entrada RKEY
+          |epsilon
+
+argumentos -> ID restoargumentos
+              | epsilon
+
+restoargumentos -> COMA argumentos
+                |epsilon
+
+logic -> logic EQUAL logicand
+        |logic NEQUAL logicand
+        |logicand
+
+logicand -> logicand AND logicor
+            | logicor
+
+logicor -> logicor OR logicpr
+            | logicpr
+
+logicpr-> logicpr LESSOREQUAL expr
+          |logicpr BIGGEROREQUAL expr
+          |logicpr GREATER expr
+          |logicpr LESS expr
+          | expr
+
+expr -> expr PLUS fact
+        |expr MINUS fact
+        |fact
+
+fact -> fact TIMES basico
+        |fact DIVIDE basico
+        |basico
+
+basico -> MINUS basico
+          |ID dimasig
+          |NUM
+          |LPAREN logic RPAREN

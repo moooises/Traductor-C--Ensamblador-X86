@@ -7,6 +7,7 @@ tabla = {}
 contenedor = {} #Diccionario con todas las tablas.
 labels = 0
 labelsprintf=0
+freememory=0
 nivel=1
 varprintf=[]
 valueprintf=[]
@@ -333,7 +334,7 @@ class endFunction():
         f.write('ret\n')
 
 class CalcLexer(Lexer):
-    tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
+    tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,OR,AND,
               IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN,RCORCHERTE,LCORCHETE,DIRECC,PRINTF,CADENA,SCANF}
     ignore = ' \t'
 
@@ -354,6 +355,8 @@ class CalcLexer(Lexer):
     NUM = r'\d+'
 
     #Aritmetic
+    AND=r'&&'
+    OR=r'\|\|'
     PLUS = r'\+'
     MINUS = r'-'
     TIMES = r'\*'
@@ -412,17 +415,20 @@ class CalcParser(Parser):
     #def function(self,p):
     #    pass
 
-    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY main_f')
+    @_('TIPO MAIN begin LPAREN RPAREN LKEY entrada RKEY  empty11 main_f')
     def main_f(self, p):
-        endFunction()
         pass
-    @_('TIPO ID begin LPAREN parametro reserva RPAREN LKEY entrada RKEY main_f') #Funcion estándar
+
+    @_('TIPO ID begin LPAREN parametro reserva RPAREN LKEY entrada RKEY empty11 main_f') #Funcion estándar
     def main_f(self, p):
-        endFunction()
         pass
     @_(' ')
     def main_f(self, p):
         pass
+
+    @_('')
+    def empty11(self,p):
+        endFunction()
 
     @_(' ')
     def begin(self, p):
@@ -478,7 +484,7 @@ class CalcParser(Parser):
 
     @_('PRINTF LPAREN  CADENA empty9 idextra empty8 RPAREN')
     def imprimir(self,p):
-        global varprintf,asig
+        global varprintf,asig,freememory
         imprimir=p.CADENA
         imprimir=imprimir.split("%d")
         printfstring=""
@@ -510,22 +516,27 @@ class CalcParser(Parser):
 
     @_('')
     def empty8(self,p):
-        global labelsprintf,varprintf,tabla
+        global labelsprintf,varprintf,tabla,freememory
         for i in range(0,len(varprintf)):
+            freememory+=1
             f.write("pushl "+str(tabla[varprintf[i]][0])+"(%ebp)\n")
         f.write("pushl $s"+str(labelsprintf)+"\n")
         f.write("call printf\n")
+        f.write("addl $"+str(4*freememory)+" ,esp\n")
         labelsprintf=labelsprintf+1
-
+        freememory=0
     @_('')
     def empty10(self,p):
-        global labelsprintf,varprintf,tabla
+        global labelsprintf,varprintf,tabla,freememory
         for i in range(0,len(varprintf)):
+            freememory+=1
             f.write("leal "+str(tabla[varprintf[i]][0])+"(ebp), %eax\n")
             f.write("pushl %eax\n")
         f.write("pushl $s"+str(labelsprintf)+"\n")
         f.write("call scanf\n")
+        f.write("addl $"+str(4*freememory)+" ,esp\n")
         labelsprintf=labelsprintf+1
+        freememory=0
 
     @_('')
     def empty9(self,p):
@@ -752,7 +763,7 @@ class CalcParser(Parser):
 
     @_('IF LPAREN empty3 LKEY entrada RKEY elseif')
     def instruction(self,p):
-        global eax
+        global eax,nivel
         eax=False
         nivel-=1
 
@@ -777,31 +788,55 @@ class CalcParser(Parser):
     @_("ELSE LKEY")
     def empty4(self,p):
         global labels,labelsif
-        f.write("jmp final"+str(labels))
+        f.write("jmp final"+str(labels)+"\n")
         f.write("final"+str(labelsif.pop())+":\n")
         labelsif.append(labels)
         incrementLabel()
 
-    @_('logic EQUAL logicpr')
+    @_('logic EQUAL logicand')
     def logic(self, p):
         NodoEqual()
         if type(p.logic) is str:
-            return tabla[p.logic][1]==p.logicpr
+            return tabla[p.logic][1]==p.logicand
         else:
-            return p.logic == p.logicpr
+            return p.logic == p.logicand
         #return NodoLogic(p.logic, p.EQUAL, p.logicpr)
 
-    @_('logic NEQUAL logicpr')
+    @_('logic NEQUAL logicand')
     def logic(self, p):
         NodoNequal()
         if type(p.logic) is str:
-            return tabla[p.logic][1]!=p.logicpr
+            return tabla[p.logic][1]!=p.logicand
         else:
-            return p.logic != p.logicpr
+            return p.logic != p.logicand
+
+    @_('logicand')
+    def logic(self, p):
+        return p.logicand #Perfe, debería subir el nodo.
+
+    @_('logicand AND logicor')
+    def logicand(self, p):
+        NodoAnd()
+        if type(p.logicand) is str:
+            return tabla[p.logicand][1]<=p.logicor
+        else:
+            return p.logicand <= p.logicor
+
+    @_('logicor')
+    def logicand(self,p):
+        return p.logicor
+
+    @_('logicor OR logicpr')
+    def logicor(self,p):
+        NodoOr()
+        if type(p.logicor) is str:
+            return tabla[p.logicor][1]<=p.logicpr
+        else:
+            return p.logicor <= p.logicpr
 
     @_('logicpr')
-    def logic(self, p):
-        return p.logicpr #Perfe, debería subir el nodo.
+    def logicor(self,p):
+        return p.logicpr
 
     @_('logicpr LESSOREQUAL expr')
     def logicpr(self, p):
