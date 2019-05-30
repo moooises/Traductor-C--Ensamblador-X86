@@ -36,13 +36,50 @@ def resetparameter():
     global counterparameter
     counterparameter = 0
 
+def stackvariable():
+    global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
+    decla = False
+    longitud.reverse()
+    for i in range(0, len(declavar)):
+        value = declavalue.pop()
+        var = declavar[value]
+        tam = longitud.pop()
+        if tam >= 1:
+            vectores[value] = tam
+
+        if var == None:
+            manejador.insertVar(value, 0, tam)  # ID, valor
+            NodoVariable(tam)
+        else:
+            if type(var) is int:
+                manejador.insertVar(value, var, tam)  # ID, valor
+                NodoVariable(tam)
+                f.write("movl $" + str(var) + ", %eax\n")
+                f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
+            else:
+                if type(value) is str:
+                    try:
+                        manejador.insertVar(value, declavar[var], tam)  # ID, valor
+                        NodoVariable(tam)
+                        f.write("movl $" + str(declavar[var]) + ", %eax\n")
+                        f.write("movl %eax, " + str(tabla[value][0]) + "(%ebp)\n")
+                    except:
+                        manejador.insertVar(value, tabla[var][1], tam)  # ID, valor
+                        NodoVariable(tam)
+                        if (tam > 0):
+                            f.write("movl  " + str(tabla[var][0]) + "(%ebp), " + str(tabla[value][0]) + "(%ebp)\n")
+
+                else:
+                    manejador.insertVar(var, 0, tam)  # ID, valor
+                    NodoVariable(tam)
+
+    vector = False
+    declavar.clear()
+    del declavalue[:]
+    del longitud[:]
 
 class Tabla():
     contador = 0
-    #selector = 0
-    #def selectTable(self, id):
-    #    if id in selector:
-    #        self.selector = tabla[id]
     def aumentarcontador(self):
         self.contador-=4
 
@@ -71,16 +108,8 @@ class Tabla():
                 else:
                     tabla[var+str(tam)][1] = value
 
-                #for i in range(0,vectores[var]):
-                #    if i==0:
-                #        if tabla[var][2]==tam:
-                #            tabla[var][1] = value
-                #    else:
-                #        if tabla[var+str(i)][2]==tam:
-
         else:
             raise NameError('Variable ' + "\"" + str(var) + "\"" + 'no declarada')
-        #print(tabla)
 
     def compVar(self, var):
         if var in tabla:
@@ -456,7 +485,8 @@ class CalcParser(Parser):
         if counterparameter != 0:
             f.write('subl $' + str(counterparameter) + ", %esp\n")
             resetparameter()
-
+        stackvariable()
+        """
         global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
         decla = False
         longitud.reverse()
@@ -502,7 +532,7 @@ class CalcParser(Parser):
         declavar.clear()
         del declavalue[:]
         del longitud[:]
-
+        """
     @_('asignacion END  entrada')
     def entrada(self,p):
         pass
@@ -590,6 +620,8 @@ class CalcParser(Parser):
 
     @_('TIPO empty5 declaracion')
     def declaraciontipo(self,p):
+        stackvariable()
+        """
         global decla, declavalue, declavar, tabla, longitud, tablaVectores, vectores
         decla=False
         longitud.reverse()
@@ -630,7 +662,7 @@ class CalcParser(Parser):
         declavar.clear()
         del declavalue[:]
         del longitud[:]
-
+        """
     @_('ID dim valordec empty6 restodeclaracion')
     def declaracion(self,p):
         global longitud
