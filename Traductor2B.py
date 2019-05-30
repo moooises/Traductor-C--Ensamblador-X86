@@ -6,6 +6,9 @@ from sly import Lexer, Parser
 tabla = {}
 contenedor = {} #Diccionario con todas las tablas.
 labels = 0
+labelsprintf=0
+varprintf=[]
+valueprintf=[]
 labelsif=[]
 endlabelswhile=[]
 labelswhile=[]
@@ -13,12 +16,15 @@ tablaVectores={}
 decla=False
 asig=False
 eax=False
+prinfvar=0
+printfstring=""
 longitud=[]
 vectores={}
 vector=False
 counterparameter = 0
 declavar={}
 declavalue=[]
+f=open("Ensamblador.S","w")
 
 def incrementparameter():
     global counterparameter
@@ -34,6 +40,8 @@ class Tabla():
     #def selectTable(self, id):
     #    if id in selector:
     #        self.selector = tabla[id]
+    def aumentarcontador(self):
+        self.contador-=4
 
     def insertVar(self, var, value,tam):
         if var in tabla:
@@ -100,172 +108,172 @@ class NodoVariable():
         tam=int(tam)
         if tam==-1:
             tam=1
-        print("subl $"+str(4*tam)+", %esp")
+        f.write("subl $"+str(4*tam)+", %esp\n")
 
 class NodoAsign():
     def __init__(self, variable, valor,tam):
         if tam<=-1:
             if valor == None:
-                print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
+                f.write("movl %eax, " + str(tabla[variable][0]) + "(%ebp)\n")
             else:
                 if type(valor) is str:
-                    print("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
+                    f.write("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)\n")
                 else:
                     if eax:
-                        print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                        f.write("movl %eax ," + str(tabla[variable][0]) + "(%ebp)\n")
                     else:
-                        print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+                        f.write("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)\n")
         else:
             if tam>0:
                 variable=variable+str(tam)
             if valor == None:
-                print("movl %eax, " + str(tabla[variable][0]) + "(%ebp)")
+                f.write("movl %eax, " + str(tabla[variable][0]) + "(%ebp)\n")
             else:
                 if type(valor) is str:
-                    print("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)")
+                    f.write("movl "+str(tabla[variable][0])+"(%ebp) ,"+str(tabla[variable][0]) + "(%ebp)\n")
                 else:
                     if eax:
-                        print("movl %eax ," + str(tabla[variable][0]) + "(%ebp)")
+                        f.write("movl %eax ," + str(tabla[variable][0]) + "(%ebp)\n")
                     else:
-                        print("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)")
+                        f.write("movl $" + str(valor) + ", " + str(tabla[variable][0]) + "(%ebp)\n")
 
 
 class NodoSuma():
     def __init__(self):
-        print("addl %ecx, %eax")
-        #print("movl %eax, " + str1)
+        f.write("addl %ecx, %eax\n")
+        #f.write("movl %eax, " + str1)
 
 class NodoResta():
     def __init__(self):
-        print("subl %ecx, %eax")
+        f.write("subl %ecx, %eax\n")
 
 class NodoProducto():
     def __init__(self):
-        print("imull %ecx, %eax")
+        f.write("imull %ecx, %eax\n")
 
 class NodoDivision():
     def __init__(self):
-        print("cdq")
-        print("divl %ecx")
+        f.write("cdq\n")
+        f.write("divl %ecx\n")
 
 class NodoEqual():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("jne final"+str(labels))
-        print("movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("jne final"+str(labels)+"\n")
+        f.write("movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 
 class NodoNequal():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("je final"+str(labels))
-        print("movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("je final"+str(labels)+"\n")
+        f.write("movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoGreater():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("jle final"+str(labels))
-        print("movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("jle final"+str(labels)+"\n")
+        f.write("movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 
 class NodoSmaller():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("jg final"+str(labels))
-        print(" movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("jg final"+str(labels)+"\n")
+        f.write(" movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoSmallerEqual():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("jg final"+str(labels))
-        print(" movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("jg final"+str(labels)+"\n")
+        f.write(" movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoGreaterEqual():
     def __init__(self):
         global labels
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp %edx, %ecx")
-        print("jl final"+str(labels))
-        print(" movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp %edx, %ecx\n")
+        f.write("jl final"+str(labels)+"\n")
+        f.write(" movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoNeg():##Problema con esto
     def __init__(self):
         global eax
         if eax:
-            print("negl %eax")
+            f.write("negl %eax\n")
         else:
-            print("negl %ecx")
+            f.write("negl %ecx\n")
 
 
 class NodoNot():#aqui
     def __init__(self):
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp $0, %edx")
-        print("jne final"+str(labels))
-        print("movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp $0, %edx\n")
+        f.write("jne final"+str(labels)+"\n")
+        f.write("movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoAnd():
     def __init__(self):
-        print("movl %eax,%edx")
-        print("movl $0,%eax")
-        print("cmp $0, %edx")
-        print("je final"+str(labels))
-        print("movl %ecx,%edx")
-        print("cmp $0, %edx")
-        print("je final"+str(labes))
-        print("movl $1, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $0,%eax\n")
+        f.write("cmp $0, %edx\n")
+        f.write("je final"+str(labels)+"\n")
+        f.write("movl %ecx,%edx\n")
+        f.write("cmp $0, %edx\n")
+        f.write("je final"+str(labes)+"\n")
+        f.write("movl $1, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoOr():
     def __init__(self):
-        print("movl %eax,%edx")
-        print("movl $1,%eax")
-        print("cmp $0, %edx")
-        print("jne final"+str(labels))
-        print("movl %ecx,%edx")
-        print("cmp $0, %edx")
-        print("jne final"+str(labels))
-        print("movl $0, %eax")
-        print("final"+str(labels)+":")
+        f.write("movl %eax,%edx\n")
+        f.write("movl $1,%eax\n")
+        f.write("cmp $0, %edx\n")
+        f.write("jne final"+str(labels)+"\n")
+        f.write("movl %ecx,%edx\n")
+        f.write("cmp $0, %edx\n")
+        f.write("jne final"+str(labels)+"\n")
+        f.write("movl $0, %eax\n")
+        f.write("final"+str(labels)+":\n")
         incrementLabel()
 
 class NodoWhile():
     def __init__(self):
         global endlabelswhile,labels
-        print("cmp $0,%eax")
-        print("jne final"+str(labels))
+        f.write("cmp $0,%eax\n")
+        f.write("jne final"+str(labels)+"\n")
         endlabelswhile.append(labels)
         incrementLabel()
 
@@ -274,8 +282,8 @@ class NodoWhile():
 class NodoIf():
     def __init__(self):
         global labels,labelsif
-        print("cmp $0,%eax")
-        print("je final"+str(labels))
+        f.write("cmp $0,%eax\n")
+        f.write("je final"+str(labels)+"\n")
         labelsif.append(labels)
         incrementLabel()
 
@@ -288,47 +296,49 @@ class NodoLogic():
 
     def escribir(self):
         #Averiguar en que posicion esta la variable que buscas.
-        print( "cmp " + manejador.cadena(self.valor2) + "," + manejador.cadena(self.valor1))
+        f.write( "cmp " + manejador.cadena(self.valor2) + "," + manejador.cadena(self.valor1)+"\n")
 
     def salto(self):
         global labels
         if self.op == '!=':
-            print("je L" + str(labels + 1))
+            f.write("je L" + str(labels + 1)+"\n")
         if self.op == '==':
-            print("jne L" + str(labels + 1))
+            f.write("jne L" + str(labels + 1)+"\n")
         if self.op == '<':
-            print("jl L" + str(labels + 1))
+            f.write("jl L" + str(labels + 1)+"\n")
         if self.op == '>':
-            print("jg L" + str(labels + 1))
+            f.write("jg L" + str(labels + 1)+"\n")
         if self.op == '<=':
-            print("jle L" + str(labels + 1))
+            f.write("jle L" + str(labels + 1)+"\n")
         if self.op == '>=':
-            print("jge L" + str(labels + 1))
+            f.write("jge L" + str(labels + 1)+"\n")
 
 class beginFunction():
     def __init__(self, nombre):
         #resetparameter()
-        print('.text')
-        print('.globl ' + nombre)
-        print('.type ' + nombre + ", @function")
-        print(nombre + ":")
+        f.write('.text\n')
+        f.write('.globl ' + nombre+"\n")
+        f.write('.type ' + nombre + ", @function\n")
+        f.write(nombre + ":\n")
 
-        print('pushl %ebp')
-        print('movl %esp, %ebp')
+        f.write('pushl %ebp\n')
+        manejador.aumentarcontador()
+        f.write('movl %esp, %ebp\n')
 
 class endFunction():
     def __init__(self):
-        print('movl %ebp, %esp')
-        print('popl %ebp')
-        print('ret')
+        f.write('movl %ebp, %esp\n')
+        f.write('popl %ebp\n')
+        f.write('ret\n')
 
 class CalcLexer(Lexer):
     tokens = {ID, TIPO, NUM, PLUS, MINUS, TIMES, DIVIDE, ASSIGN, LPAREN, RPAREN, EQUAL, NEQUAL ,GREATER,
-              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN,RCORCHERTE,LCORCHETE}
+              IF, ELSE, WHILE, LKEY, RKEY, COMA, END, LESS, BIGGEROREQUAL, LESSOREQUAL, MAIN, RETURN,RCORCHERTE,LCORCHETE,DIRECC,PRINTF,CADENA,SCANF}
     ignore = ' \t'
 
     # Tokens
     ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    CADENA =r'"[a-zA-Z0-9% ]*"' # COMPROBAR ESTO
     ID['int'] = TIPO
     ID['void'] = TIPO
     ID['if'] = IF
@@ -336,6 +346,9 @@ class CalcLexer(Lexer):
     ID['while'] = WHILE
     ID['main'] = MAIN
     ID['return'] = RETURN
+    ID['printf'] = PRINTF
+    ID['scanf']=SCANF
+
     NUM = r'\d+'
 
     #Aritmetic
@@ -358,6 +371,7 @@ class CalcLexer(Lexer):
     END = r';'
     RCORCHERTE=r'\]'
     LCORCHETE=r'\['
+    DIRECC=r'&'
 
 
     # Ignored pattern
@@ -413,12 +427,12 @@ class CalcParser(Parser):
         global tabla
         #manejador.tabla = {}
         tabla = {}
-        #print(p[-1]) #Hell yeah, accedemos al principio.
+        #f.write(p[-1]) #Hell yeah, accedemos al principio.
         beginFunction(p[-1])
 
     @_('TIPO ID resto')
     def parametro(self, p): #PEEERFECTO!!!!!
-        #print('incrementado parametro ' + p.ID)
+        #f.write('incrementado parametro ' + p.ID)
         incrementparameter()
 
     @_(' ')
@@ -437,7 +451,7 @@ class CalcParser(Parser):
     def reserva(self, p):
         global counterparameter
         if counterparameter != 0:
-            print('subl $' + str(counterparameter) + ", %esp")
+            f.write('subl $' + str(counterparameter) + ", %esp\n")
             resetparameter()
 
     @_('asignacion END  entrada')
@@ -451,6 +465,70 @@ class CalcParser(Parser):
     @_('instruction entrada')
     def entrada(self,p):
         pass
+
+    @_('imprimir END entrada')
+    def entrada(self,p):
+        pass
+
+    @_('escanear END entrada')
+    def entrada(self,p):
+        pass
+
+    @_('PRINTF LPAREN  CADENA empty9 idextra empty8 RPAREN')
+    def imprimir(self,p):
+        global varprintf,asig
+        imprimir=p.CADENA
+        imprimir=imprimir.split("%d")
+        printfstring=""
+        for i in range(0,len(imprimir)):
+            printfstring=printfstring+imprimir[i]
+            if varprintf:
+                printfstring=printfstring+str((tabla[varprintf.pop()][1]))
+        #print(printfstring)
+        del varprintf[:]
+        asig=False
+
+    @_('SCANF LPAREN  CADENA empty9 idextra empty10 RPAREN')
+    def escanear(self,p):
+        pass
+
+    @_(' COMA basico idextra')
+    def idextra(self,p):
+        global varprintf
+        varprintf.append(p.basico)
+
+    @_(' COMA DIRECC basico idextra')
+    def idextra(self,p):
+        global varprintf
+        varprintf.append(p.basico)
+
+    @_(' ')
+    def idextra(self,p):
+        pass
+
+    @_('')
+    def empty8(self,p):
+        global labelsprintf,varprintf,tabla
+        for i in range(0,len(varprintf)):
+            f.write("pushl "+str(tabla[varprintf[i]][0])+"(%ebp)\n")
+        f.write("pushl $s"+str(labelsprintf)+"\n")
+        f.write("call printf\n")
+        labelsprintf=labelsprintf+1
+
+    @_('')
+    def empty10(self,p):
+        global labelsprintf,varprintf,tabla
+        for i in range(0,len(varprintf)):
+            f.write("leal "+str(tabla[varprintf[i]][0])+"(ebp), %eax\n")
+            f.write("pushl %eax\n")
+        f.write("pushl $s"+str(labelsprintf)+"\n")
+        f.write("call scanf\n")
+        labelsprintf=labelsprintf+1
+
+    @_('')
+    def empty9(self,p):
+        global asig
+        asig=True
 
     @_('')
     def entrada(self,p):
@@ -476,20 +554,20 @@ class CalcParser(Parser):
                 if type(var) is int:
                     manejador.insertVar(value,var,tam)#ID, valor
                     NodoVariable(tam)
-                    print("movl $"+str(var)+", %eax")
-                    print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
+                    f.write("movl $"+str(var)+", %eax\n")
+                    f.write("movl %eax, "+ str(tabla[value][0]) + "(%ebp)\n")
                 else:
                     if type(value) is str:
                         try:
                             manejador.insertVar(value,declavar[var],tam)#ID, valor
                             NodoVariable(tam)
-                            print("movl $"+str(declavar[var])+", %eax")
-                            print("movl %eax, "+ str(tabla[value][0]) + "(%ebp)")
+                            f.write("movl $"+str(declavar[var])+", %eax\n")
+                            f.write("movl %eax, "+ str(tabla[value][0]) + "(%ebp)\n")
                         except:
                             manejador.insertVar(value,tabla[var][1],tam)#ID, valor
                             NodoVariable(tam)
                             if(tam>0):
-                                print("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)")
+                                f.write("movl  "+str(tabla[var][0])+"(%ebp), "+ str(tabla[value][0]) + "(%ebp)\n")
 
                     else:
                         manejador.insertVar(var,0,tam)#ID, valor
@@ -571,7 +649,7 @@ class CalcParser(Parser):
 
     @_('LCORCHETE NUM RCORCHERTE dim')
     def dim(self,p):
-            return int(p.NUM)*p.dim
+                return int(p.NUM)*p.dim
     @_('')
     def dim(self,p):
         return 1
@@ -613,8 +691,8 @@ class CalcParser(Parser):
     @_('ID LPAREN argumentos RPAREN END')
     def instruction(self, p):
         global counterparameter
-        print('call ' + p.ID)
-        print('addl ' + str(counterparameter) + ", %esp")
+        f.write('call ' + p.ID+"\n")
+        f.write('addl ' + str(counterparameter) + ", %esp\n")
         resetparameter()
 
     @_(' ')
@@ -623,7 +701,7 @@ class CalcParser(Parser):
 
     @_('ID restoargumentos')
     def argumentos(self, p):
-        print("pushl " + manejador.cadena(p.ID))#p.ID)
+        f.write("pushl " + manejador.cadena(p.ID)+"\n")#p.ID)
         incrementparameter()
 
     @_('COMA argumentos')
@@ -636,16 +714,16 @@ class CalcParser(Parser):
 
     @_('RETURN logic END')
     def instruction(self, p):
-        #print('movl ' + manejador.cadena(p.logic) + ", %eax")
-        #print('ret')
+        #f.write('movl ' + manejador.cadena(p.logic) + ", %eax")
+        #f.write('ret')
         #endFunction() Hace falta en la tabla un marcador inicio-fin funcion
         pass
 
     @_('WHILE LPAREN empty1 empty2 entrada RKEY')
     def instruction(self, p):
         global labels,endlabelswhile
-        print('jmp final' + str(labelswhile.pop()))
-        print("final"+str(endlabelswhile.pop())+":")
+        f.write('jmp final' + str(labelswhile.pop())+"\n")
+        f.write("final"+str(endlabelswhile.pop())+":\n")
         incrementLabel()
         global eax
         eax=False
@@ -653,7 +731,7 @@ class CalcParser(Parser):
     @_(" ")
     def empty1(self, p):
         global labels,labelswhile,endlabelswhile
-        print("final"+str(labels)+":")
+        f.write("final"+str(labels)+":\n")
         labelswhile.append(labels)
         incrementLabel() #Imprimir la etiqueta actual
 
@@ -679,19 +757,19 @@ class CalcParser(Parser):
     @_(' ')
     def elseif(self,p):
         global labels,labelsif
-        print("final"+str(labelsif.pop())+":")
+        f.write("final"+str(labelsif.pop())+":\n")
         incrementLabel()
 
     @_('empty4 entrada RKEY')
     def elseif(self,p):
         global labels,labelsif
-        print("final"+str(labelsif.pop())+":")
+        f.write("final"+str(labelsif.pop())+":\n")
 
     @_("ELSE LKEY")
     def empty4(self,p):
         global labels,labelsif
-        print("jmp final"+str(labels))
-        print("final"+str(labelsif.pop())+":")
+        f.write("jmp final"+str(labels))
+        f.write("final"+str(labelsif.pop())+":\n")
         labelsif.append(labels)
         incrementLabel()
 
@@ -807,16 +885,42 @@ class CalcParser(Parser):
         if not decla:
             if not asig:
                 if eax:
-                    print("movl "+str(tabla[var][0])+"(%ebp), %ecx")
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %ecx\n")
                 else:
-                    print("movl "+str(tabla[var][0])+"(%ebp), %eax")
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %eax\n")
                     eax=True
                 return tabla[var][1]
             else:
                 if eax:
-                    print("movl "+str(tabla[var][0])+"(%ebp), %ecx")
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %ecx\n")
                 else:
-                    print("movl "+str(tabla[var][0])+"(%ebp), %eax")
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %eax\n")
+                    eax=True
+                asig=True
+                return var
+        else:
+            return var
+
+    @_('DIRECC ID dimasig')
+    def basico(self,p):
+        global eax,decla,asig
+        var=p.ID
+        if p.dimasig>0:
+            var=var+str(p.dimasig)
+        if not decla:
+            if not asig:
+                if eax:
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %ecx\n")
+                else:
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %eax\n")
+                    eax=True
+                return tabla[var][1]
+            else:
+                if eax:
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %ecx\n")
+                else:
+                    f.write("movl "+str(tabla[var][0])+"(%ebp), %eax\n")
+
                     eax=True
                 asig=True
                 return var
@@ -828,9 +932,9 @@ class CalcParser(Parser):
         global eax,decla
         if not decla:
             if eax:
-                print("movl $"+str(p.NUM)+", %ecx")
+                f.write("movl $"+str(p.NUM)+", %ecx\n")
             else:
-                print("movl $"+str(p.NUM)+", %eax")
+                f.write("movl $"+str(p.NUM)+", %eax\n")
                 eax=True
         return int(p.NUM)
 
@@ -847,6 +951,11 @@ if __name__ == '__main__':
         reader = open(dir, 'r')
         text = reader.read()
         parser.parse(lexer.tokenize(text))
+        f.close()
+        with open("Ensamblador.S", 'r') as reader:
+            for line in reader:
+                print(line,end='')
+
     else:
         print("Este programa necesita un parámetro");
 
