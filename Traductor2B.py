@@ -345,6 +345,7 @@ class CalcLexer(Lexer):
     ID['if'] = IF
     ID['else'] = ELSE
     ID['while'] = WHILE
+    #ID['for']=FOR
     ID['main'] = MAIN
     ID['return'] = RETURN
     ID['printf'] = PRINTF
