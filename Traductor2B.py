@@ -27,7 +27,7 @@ vector=False
 counterparameter = 0
 declavar={}
 declavalue=[]
-f=open("Ensamblador.S","w")
+f=open("Ensamblador.S","w+")
 
 def incrementparameter():
     global counterparameter
@@ -549,7 +549,11 @@ class CalcParser(Parser):
         for i in range(0,len(imprimir)):
             printfstring=printfstring+imprimir[i]
             if varprintf:
-                printfstring=printfstring+str((tabla[varprintf.pop()][1]))
+                v=varprintf.pop()
+                if type(v) is int:
+                    printfstring=printfstring+str(v)
+                else:
+                    printfstring=printfstring+str((tabla[v][1]))
         #print(printfstring)
         del varprintf[:]
         asig=False
@@ -577,10 +581,23 @@ class CalcParser(Parser):
         global labelsprintf,varprintf,tabla,freememory
         for i in range(0,len(varprintf)):
             freememory+=1
-            f.write("pushl "+str(tabla[varprintf[i]][0])+"(%ebp)\n")
+            if type(varprintf[i]) is int:
+                f.write("pushl "+str(varprintf[i])+"(%ebp)\n")
+            else:
+                f.write("pushl "+str(tabla[varprintf[i]][0])+"(%ebp)\n")
         f.write("pushl $s"+str(labelsprintf)+"\n")
         f.write("call printf\n")
         f.write("addl $"+str(4*freememory)+" ,esp\n")
+        f.seek(0,0)
+        line=f.read()
+        f.seek(0,0)
+        f.write("\n")
+        f.write(".s"+str(labelsprintf)+":\n")
+        f.write(".string "+p[-3]+":\n")
+        f.write(".section   .rodata")
+        f.write("\n")
+        f.write("\n")
+        f.write(line)
         labelsprintf=labelsprintf+1
         freememory=0
     @_('')
@@ -593,6 +610,16 @@ class CalcParser(Parser):
         f.write("pushl $s"+str(labelsprintf)+"\n")
         f.write("call scanf\n")
         f.write("addl $"+str(4*freememory)+" ,esp\n")
+        f.seek(0,0)
+        line=f.read()
+        f.seek(0,0)
+        f.write("\n")
+        f.write(".s"+str(labelsprintf)+":\n")
+        f.write(".string "+p[-3]+":\n")
+        f.write(".section   .rodata")
+        f.write("\n")
+        f.write("\n")
+        f.write(line)
         labelsprintf=labelsprintf+1
         freememory=0
 
